@@ -12,7 +12,7 @@ NTFS4Mac/                           Host app target (required container for the 
   Info.plist
   NTFS4Mac.entitlements
 NTFSExtension/                      FSKit app-extension target (com.apple.fskit.fsmodule)
-  Info.plist                        EXAppExtensionAttributes: FSShortName, FSPersonalities, FSMediaTypes ...
+  Info.plist                        EXAppExtensionAttributes: FSShortName (ntfs4mac), FSPersonalities, FSMediaTypes ...
   NTFSExtension.entitlements        com.apple.developer.fskit.fsmodule + sandbox
   NTFSExtensionMain.swift           @main UnaryFileSystemExtension
   NTFSFileSystem.swift              FSUnaryFileSystem: probe / load / unload / check / format
@@ -43,6 +43,7 @@ docs/                               ARCHITECTURE.md, TESTING.md, FSKIT_NOTES.md
 | Extension bundle id            | `com.vahidzekic.ntfs4mac.NTFSExtension`    |
 | Xcode targets                  | `NTFS4Mac` (app), `NTFSExtension` (appex)  |
 | Extension point                | `com.apple.fskit.fsmodule`                 |
+| FSShortName / personality     | `ntfs4mac` / `NTFS4Mac` (FSName "NTFS")   |
 | Deployment target              | macOS 15.4 (first release with public FSKit) |
 | Swift language mode            | Swift 6, strict concurrency complete       |
 
@@ -81,15 +82,26 @@ Finder / diskutil / Disk Utility
 4. **Alignment.** Swift `BlockDeviceIO` callbacks only ever see
    block-aligned offset/length; the C device layer bounces unaligned IO.
 5. **Ownership.** NTFS has no POSIX ownership without a user mapping file.
-   Every item is reported with the mount's uid/gid (default: the uid/gid
-   FSKit passes, otherwise 99 "unknown" so the current user gets access) and
-   mode 0755 (dirs) / 0644 (files), minus 0222 if FILE_ATTR_READONLY.
+   Every item is reported with the mount's uid/gid (`uid=`/`gid=` options,
+   default 99 "unknown" so the current user gets access). Files get
+   `0666 & ~fmask`, directories `0777 & ~dmask` (default masks 022); files with
+   FILE_ATTR_READONLY lose their write bits and show UF_IMMUTABLE. READONLY is
+   ignored on directories, as Windows uses it there only as a display marker.
 6. **Format.** mkntfs is not a library. `scripts/build-libntfs3g.sh` compiles
-   `ntfsprogs/mkntfs.c` (+ its helpers) into `libmkntfs.a` with
-   `-Dmain=ntfsb_mkntfs_main -Dntfs_device_default_io_ops=ntfsb_mkntfs_io_ops`
-   so mkntfs runs in-process and its device IO goes through the FSKit
-   resource. `ntfsb_format()` builds an argv (`-F -Q -L label -c size -s sector
-   -p hidden -H 0 -S 0 <dummy-dev> <sectors>`) and calls it.
+   `ntfsprogs/{attrdef,boot,sd,mkntfs,utils}.c` into `libmkntfs.a`:
+   - all five: `-DHAVE_CONFIG_H -Dexit=ntfsb_mkntfs_exit`
+   - `mkntfs.c` additionally: `-DNTFSB_MKNTFS_UNIT -include
+     NTFSExtension/Bridge/mkntfs_glue.h -Dmain=ntfsb_mkntfs_main`
+
+   A command-line `-Dntfs_device_default_io_ops=...` does **not** work:
+   `device_io.h` itself `#define`s that name to `ntfs_device_unix_io_ops`.
+   `mkntfs_glue.h` therefore renames `ntfs_device_unix_io_ops` to
+   `ntfsb_mkntfs_io_ops` and emits `ntfsb_mkntfs_reset_state()` inside
+   mkntfs.c, because mkntfs keeps static state that is not re-entrant.
+   `ntfsb_format()` builds an argv (`-F [-Q] [-C] [-L label] [-c size] -s
+   <block size> -p <hidden> -H 255 -S 63 ntfsb-format-device <sectors>`) and
+   calls `ntfsb_mkntfs_main` under a process-wide mutex.
+   Tests/bridge/README.md holds the verified build recipe.
 7. **Licensing.** libntfs-3g / mkntfs are GPL-2.0-or-later; the shipped
    extension must therefore be distributed under GPL-compatible terms.
 

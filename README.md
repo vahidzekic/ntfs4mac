@@ -6,6 +6,9 @@ ntfs-3g). It lets Finder, `diskutil`, Disk Utility and `mount` use Windows NTFS
 volumes for reading, writing and formatting. It does not need a kernel
 extension or macFUSE, and you do not have to lower system security to use it.
 
+> **License:** GPL-2.0-or-later (use under GPL-2.0 or GPL-3.0) — built on
+> [tuxera/ntfs-3g](https://github.com/tuxera/ntfs-3g). See [License](#license).
+>
 > **Status:** Work in progress. Not yet built on real hardware.
 >
 > **Data-loss warning:** Writing to NTFS from a non-Windows implementation
@@ -498,11 +501,30 @@ Contributions are welcome. Please:
 
 ## License
 
-ntfs4mac links **libntfs-3g** and compiles **mkntfs** into the extension.
-Both are licensed under the **GNU General Public License v2.0 or later**.
-For that reason, ntfs4mac as a whole is distributed under
-**GPL-2.0-or-later**. Anything that links the C bridge inherits the same
-terms.
+ntfs4mac is built on the **[tuxera/ntfs-3g](https://github.com/tuxera/ntfs-3g)**
+repository: it links **libntfs-3g** and compiles **mkntfs** (ntfsprogs) into
+the FSKit extension. That repository is licensed under the **GNU General
+Public License, version 2 or (at your option) any later version**.
+
+Because of that, ntfs4mac is distributed under the same terms:
+
+| | |
+|---|---|
+| SPDX identifier | `GPL-2.0-or-later` |
+| You may use, modify and redistribute it under | **GPL-2.0** *or* **GPL-3.0** (your choice) |
+| Upstream dependency | [tuxera/ntfs-3g](https://github.com/tuxera/ntfs-3g), GPL-2.0-or-later |
+
+What this means in practice:
+
+- Any binary you distribute that contains the extension (the `.app` with the
+  embedded `.appex`) must be accompanied by, or offer, the complete
+  corresponding source code, including the libntfs-3g / mkntfs sources used
+  to build it.
+- Modifications to ntfs4mac or to the bundled libntfs-3g must be released under
+  GPL-2.0 or GPL-3.0 as well.
+- Code that links the C bridge (`NTFSExtension/Bridge/`) inherits the same
+  terms; it cannot be relicensed under a proprietary or GPL-incompatible
+  license.
 
 ## Credits
 

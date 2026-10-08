@@ -1,0 +1,34 @@
+# macOS
+.DS_Store
+.AppleDouble
+._*
+
+# Xcode / XcodeGen (the project is generated from project.yml)
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+*.xcresult
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Build outputs
+build/
+ThirdParty/
+
+# C bridge self-test outputs (Tests/bridge, see its README)
+Tests/bridge/build/
+Tests/bridge/*.o
+Tests/bridge/*.a
+Tests/bridge/selftest
+Tests/bridge/bridge_selftest
+Tests/bridge/*.dSYM/
+
+# Disk images and test artefacts
+*.img
+*.dmg
+*.sparseimage
+*.sparsebundle
+*.shadow

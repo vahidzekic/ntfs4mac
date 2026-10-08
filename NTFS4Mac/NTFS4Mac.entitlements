@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Host app entitlements. The app only displays help and the extension's state.
+  - app-sandbox: the app needs no file access.
+  - mach-lookup exception for fskitd: lets the sandboxed app ask FSKit
+    (FSClient.fetchInstalledExtensions) whether the module is enabled. Same
+    exception as KhaosT/FSKitSample's host app. If it is ever rejected (e.g. Mac
+    App Store review), drop it: the app then shows "status unknown" and still works.
+-->
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+	<array>
+		<string>com.apple.filesystems.fskitd</string>
+	</array>
+</dict>
+</plist>

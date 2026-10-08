@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  NTFSExtension.appex manifest (FSKit module, extension point com.apple.fskit.fsmodule).
+
+  Every key under EXAppExtensionAttributes is documented, with sources and
+  verification status, in docs/FSKIT_MANIFEST.md. Keep the two in sync.
+
+  Summary of the decisions taken here:
+    FSShortName      "ntfs4mac"  (NOT "ntfs": Apple's read-only ntfs.fs owns that
+                                  name; see docs/FSKIT_MANIFEST.md §FSShortName)
+    Personality key  "NTFS4Mac"  (unique; avoids clashing with ntfs.fs's personality)
+    FSName           "NTFS"      (the human-readable name UI surfaces show)
+    Activate/mount  "o:rwu:g:"    mount -t ntfs4mac [-o rdonly,remove_hiberfile,recover,show_sys_files,ignore_case,uid=N,gid=N] /dev/diskXsY /mnt
+                                  (-r/-w read-only/read-write, -u uid, -g gid as in Apple's template)
+    Check           "nqyfl"       -n no-write, -q quick (DiskArbitration), -y repair (DiskArbitration), -f force, -l accepted and ignored
+    Format          "L:v:c:p:QfC" -L label (-v alias), -c clustersize, -p hidden sectors, -Q quick (default), -f full, -C compression
+    These strings must equal the specs parsed in NTFSExtension/NTFSFileSystem.swift.
+-->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>NTFS (ntfs4mac)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>ntfs4mac is free software under the GNU GPL v2 or later and comes with NO WARRANTY. Includes libntfs-3g and mkntfs (GPL-2.0-or-later).</string>
+	<key>EXAppExtensionAttributes</key>
+	<dict>
+		<key>EXExtensionPointIdentifier</key>
+		<string>com.apple.fskit.fsmodule</string>
+
+		<key>FSShortName</key>
+		<string>ntfs4mac</string>
+
+		<key>FSSupportsBlockResources</key>
+		<true/>
+		<key>FSSupportsPathURLs</key>
+		<false/>
+		<key>FSSupportsGenericURLResources</key>
+		<false/>
+		<key>FSSupportsServerURLs</key>
+		<false/>
+		<key>FSRequiresSecurityScopedPathURLResources</key>
+		<false/>
+		<key>FSSupportsKernelOffloadedIO</key>
+		<false/>
+
+		<key>FSActivateOptionSyntax</key>
+		<dict>
+			<key>shortOptions</key>
+			<string>o:rwu:g:</string>
+		</dict>
+		<key>FSCheckOptionSyntax</key>
+		<dict>
+			<key>shortOptions</key>
+			<string>nqyfl</string>
+		</dict>
+		<key>FSFormatOptionSyntax</key>
+		<dict>
+			<key>shortOptions</key>
+			<string>L:v:c:p:QfC</string>
+		</dict>
+
+		<key>FSPersonalities</key>
+		<dict>
+			<key>NTFS4Mac</key>
+			<dict>
+				<key>FSName</key>
+				<string>NTFS</string>
+				<key>FSSubType</key>
+				<integer>0</integer>
+				<key>FSfileObjectsAreCaseSensitive</key>
+				<false/>
+				<key>FSFormatContentMask</key>
+				<string>Windows_NTFS</string>
+				<key>FSFormatMinimumSize</key>
+				<integer>1048576</integer>
+				<key>FSFormatMaximumSize</key>
+				<integer>281474976710656</integer>
+			</dict>
+		</dict>
+
+		<key>FSMediaTypes</key>
+		<dict>
+			<!-- MBR partition type 0x07 (IOKit content hint "Windows_NTFS"). -->
+			<key>Windows_NTFS</key>
+			<dict>
+				<key>FSMediaProperties</key>
+				<dict>
+					<key>Content Hint</key>
+					<string>Windows_NTFS</string>
+					<key>Leaf</key>
+					<true/>
+				</dict>
+				<key>FSProbeOrder</key>
+				<integer>500</integer>
+			</dict>
+			<!-- GPT "Microsoft Basic Data" (shared with FAT/exFAT; probe decides). -->
+			<key>EBD0A0A2-B9E5-4433-87C0-68B6B72699C7</key>
+			<dict>
+				<key>FSMediaProperties</key>
+				<dict>
+					<key>Content Hint</key>
+					<string>EBD0A0A2-B9E5-4433-87C0-68B6B72699C7</string>
+					<key>Leaf</key>
+					<true/>
+				</dict>
+				<key>FSProbeOrder</key>
+				<integer>1500</integer>
+			</dict>
+			<!-- Whole, unpartitioned media (raw images, superfloppy sticks). -->
+			<key>Partitionless</key>
+			<dict>
+				<key>FSMediaProperties</key>
+				<dict>
+					<key>Leaf</key>
+					<true/>
+					<key>Whole</key>
+					<true/>
+				</dict>
+				<key>FSProbeOrder</key>
+				<integer>3500</integer>
+			</dict>
+		</dict>
+	</dict>
+</dict>
+</plist>

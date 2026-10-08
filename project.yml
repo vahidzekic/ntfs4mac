@@ -1,0 +1,158 @@
+# XcodeGen spec for ntfs4mac (https://github.com/yonaskolb/XcodeGen, 2.40+).
+#
+#   brew install xcodegen
+#   DEVELOPMENT_TEAM=ABCDE12345 xcodegen generate     # writes NTFS4Mac.xcodeproj (gitignored)
+#
+# DEVELOPMENT_TEAM is read from the environment at generate time. Alternatively
+# leave it empty here and pass DEVELOPMENT_TEAM=... to xcodebuild (scripts/dev-install.sh does).
+#
+# Prerequisite: scripts/build-libntfs3g.sh must have produced
+#   ThirdParty/ntfs-3g/include/{config.h,ntfs-3g/*.h}
+#   ThirdParty/ntfs-3g/lib/{libntfs-3g.a,libmkntfs.a}
+#
+# Product types (verified against KhaosT/FSKitSample's project.pbxproj and Xcode's
+# "File System Extension" target template): the module is an ExtensionKit
+# extension, com.apple.product-type.extensionkit-extension, embedded into the
+# host app's Contents/Extensions ("Embed ExtensionKit Extensions",
+# dstSubfolderSpec 16 = products directory, dstPath $(EXTENSIONS_FOLDER_PATH)).
+# It is NOT a System Extension and NOT an old-style NSExtension PlugIn.
+
+name: NTFS4Mac
+
+options:
+  bundleIdPrefix: com.vahidzekic
+  deploymentTarget:
+    macOS: "15.4"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  xcodeVersion: "16.3"
+
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    MACOSX_DEPLOYMENT_TARGET: "15.4"
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    # Apple Silicon only by default. ThirdParty libs are universal, so a
+    # universal build is just: xcodebuild ... ARCHS="arm64 x86_64"
+    ARCHS: arm64
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "Apple Development"
+    DEVELOPMENT_TEAM: "${DEVELOPMENT_TEAM}"
+    ENABLE_HARDENED_RUNTIME: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CLANG_ENABLE_MODULES: YES
+    CLANG_ENABLE_OBJC_ARC: YES
+    GCC_C_LANGUAGE_STANDARD: gnu11
+  configs:
+    Debug:
+      ONLY_ACTIVE_ARCH: YES
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+      GCC_OPTIMIZATION_LEVEL: "0"
+      DEBUG_INFORMATION_FORMAT: dwarf
+    Release:
+      ONLY_ACTIVE_ARCH: NO
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
+      GCC_OPTIMIZATION_LEVEL: s
+      DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+      # Notarization rejects com.apple.security.get-task-allow, which Xcode
+      # injects by default. For Developer ID distribution also switch to manual
+      # signing with Developer ID profiles that carry the FSKit entitlement.
+      CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
+      OTHER_CODE_SIGN_FLAGS: "--timestamp"
+
+targets:
+  NTFS4Mac:
+    type: application
+    platform: macOS
+    sources:
+      - path: NTFS4Mac
+        includes:
+          - "**/*.swift"
+    dependencies:
+      - target: NTFSExtension
+        embed: true
+        codeSign: true
+        copy:
+          destination: productsDirectory
+          subpath: "$(EXTENSIONS_FOLDER_PATH)"
+      - sdk: FSKit.framework
+    settings:
+      base:
+        PRODUCT_NAME: NTFS4Mac
+        PRODUCT_BUNDLE_IDENTIFIER: com.vahidzekic.ntfs4mac
+        INFOPLIST_FILE: NTFS4Mac/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: NTFS4Mac/NTFS4Mac.entitlements
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+        ENABLE_PREVIEWS: YES
+
+  NTFSExtension:
+    type: extensionkit-extension
+    platform: macOS
+    sources:
+      - path: NTFSExtension
+        includes:
+          - "**/*.swift"
+          - "**/*.c"
+          - "**/*.h"
+    dependencies:
+      - sdk: FSKit.framework
+    settings:
+      base:
+        PRODUCT_NAME: NTFSExtension
+        PRODUCT_BUNDLE_IDENTIFIER: com.vahidzekic.ntfs4mac.NTFSExtension
+        INFOPLIST_FILE: NTFSExtension/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: NTFSExtension/NTFSExtension.entitlements
+        SKIP_INSTALL: YES
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
+        SWIFT_OBJC_BRIDGING_HEADER: NTFSExtension/NTFSExtension-Bridging-Header.h
+        # config.h (from the libntfs-3g configure run) lives directly in include/;
+        # libntfs-3g's own headers include each other without the ntfs-3g/ prefix.
+        HEADER_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(SRCROOT)/ThirdParty/ntfs-3g/include"
+          - "$(SRCROOT)/ThirdParty/ntfs-3g/include/ntfs-3g"
+          - "$(SRCROOT)/NTFSExtension/Bridge"
+        LIBRARY_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(SRCROOT)/ThirdParty/ntfs-3g/lib"
+        # Static archives are searched left to right: libmkntfs.a references
+        # libntfs-3g symbols, so it must come first.
+        OTHER_LDFLAGS:
+          - "$(inherited)"
+          - "-lmkntfs"
+          - "-lntfs-3g"
+        # libntfs-3g headers only include config.h when HAVE_CONFIG_H is set;
+        # without it struct layouts/feature macros could differ from the
+        # compiled library.
+        GCC_PREPROCESSOR_DEFINITIONS:
+          - "$(inherited)"
+          - "HAVE_CONFIG_H=1"
+        # libntfs-3g headers trip a few pedantic warnings; keep them visible
+        # but never fatal.
+        GCC_TREAT_WARNINGS_AS_ERRORS: NO
+        SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+
+schemes:
+  NTFS4Mac:
+    build:
+      targets:
+        NTFS4Mac: all
+        NTFSExtension: all
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

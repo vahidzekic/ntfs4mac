@@ -16,6 +16,7 @@
 #include <inttypes.h>
 #include <locale.h>
 #include <pthread.h>
+#include <setjmp.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +34,19 @@
 #define NTFSB_MAX_LABEL_UNITS 32
 
 static pthread_mutex_t g_format_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/* Unwind target for exit() calls inside mkntfs (see mkntfs_glue.h). Only
+ * touched with g_format_lock held. */
+static jmp_buf g_exit_jmp;
+static bool g_exit_armed;
+
+_Noreturn void ntfsb_mkntfs_exit(int status)
+{
+    (void)status; /* any exit from mkntfs means the format did not complete */
+    if (!g_exit_armed)
+        abort(); /* mkntfs code running outside ntfsb_format(): a bug */
+    longjmp(g_exit_jmp, 1);
+}
 
 typedef struct format_progress {
     ntfsb_progress_fn fn;
@@ -221,7 +235,12 @@ int ntfsb_format(const ntfsb_io *io, const ntfsb_format_opts *opts,
 
     ntfsb_mkntfs_bind(io, format_observer, &fp);
     reset_getopt();
-    int rc = ntfsb_mkntfs_main(argc, argv);
+    volatile int rc = 1;
+    if (setjmp(g_exit_jmp) == 0) {
+        g_exit_armed = true;
+        rc = ntfsb_mkntfs_main(argc, argv);
+    }
+    g_exit_armed = false;
     ntfsb_mkntfs_bind(NULL, NULL, NULL);
     ntfsb_mkntfs_reset_state();
     reset_getopt();

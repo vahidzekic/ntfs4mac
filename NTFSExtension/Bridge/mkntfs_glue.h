@@ -13,7 +13,10 @@
  *        -DNTFSB_MKNTFS_UNIT -include <path>/mkntfs_glue.h
  *
  *    which applies the macro renames below *before* mkntfs.c and the
- *    libntfs-3g headers are parsed. No source patch is needed.
+ *    libntfs-3g headers are parsed. No source patch is needed. Extra
+ *    -Dmain=ntfsb_mkntfs_main / -Dexit=ntfsb_mkntfs_exit on the command line
+ *    are harmless: this header replaces `main` and defines `exit` the same
+ *    way.
  *
  * libntfs-3g / mkntfs are GPL-2.0-or-later; anything linking this inherits that.
  */
@@ -49,7 +52,11 @@
  *
  *     int main(int argc, char *argv[]) { ... }
  *  => int ntfsb_mkntfs_reset_state(void) { ... } int ntfsb_mkntfs_main(int argc, char *argv[]) { ... }
+ *
+ * A command-line -Dmain=ntfsb_mkntfs_main is replaced (not merely
+ * redefined, which would warn) by this definition.
  */
+#undef main
 #define main                                                              \
     ntfsb_mkntfs_reset_state(void)                                        \
     {                                                                     \
@@ -70,11 +77,29 @@
     }                                                                     \
     int ntfsb_mkntfs_main
 
+/*
+ * mkntfs 2022.10.3 returns from main() on every error path, but an exit()
+ * anywhere in the code compiled into the extension would kill the whole
+ * file-system process. Route any such call to ntfsb_mkntfs_exit(), which
+ * unwinds back into ntfsb_format(). Defined before the system headers are
+ * read, so <stdlib.h> declares the renamed function (noreturn) for us.
+ */
+#ifndef exit
+#define exit ntfsb_mkntfs_exit
+#endif
+
 /* Prototypes so the definitions above compile without warnings. */
 int ntfsb_mkntfs_reset_state(void);
 int ntfsb_mkntfs_main(int argc, char *argv[]);
 
 #else /* !NTFSB_MKNTFS_UNIT */
+
+/*
+ * Replacement for exit() inside the mkntfs unit: longjmp()s back to the
+ * running ntfsb_format(), which then fails with EIO (or ECANCELED). Must
+ * only be reached while ntfsb_format() is executing mkntfs.
+ */
+_Noreturn void ntfsb_mkntfs_exit(int status);
 
 /* mkntfs main(), renamed. argv[0] is the program name. Returns 0 on success. */
 int ntfsb_mkntfs_main(int argc, char *argv[]);

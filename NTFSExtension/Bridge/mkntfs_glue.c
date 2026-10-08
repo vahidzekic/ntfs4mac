@@ -138,6 +138,19 @@ static void reset_getopt(void)
     opterr = 0;
 }
 
+/* Run mkntfs with exit() redirected here (kept apart so that no caller
+ * locals live across setjmp). Returns mkntfs' exit status. */
+static int run_mkntfs(int argc, char **argv)
+{
+    volatile int rc = 1;
+    if (setjmp(g_exit_jmp) == 0) {
+        g_exit_armed = true;
+        rc = ntfsb_mkntfs_main(argc, argv);
+    }
+    g_exit_armed = false;
+    return rc;
+}
+
 static int validate(const ntfsb_io *io, const ntfsb_format_opts *opts)
 {
     if (!io || !opts || !io->pread || !io->pwrite || io->read_only)
@@ -235,12 +248,7 @@ int ntfsb_format(const ntfsb_io *io, const ntfsb_format_opts *opts,
 
     ntfsb_mkntfs_bind(io, format_observer, &fp);
     reset_getopt();
-    volatile int rc = 1;
-    if (setjmp(g_exit_jmp) == 0) {
-        g_exit_armed = true;
-        rc = ntfsb_mkntfs_main(argc, argv);
-    }
-    g_exit_armed = false;
+    int rc = run_mkntfs(argc, argv);
     ntfsb_mkntfs_bind(NULL, NULL, NULL);
     ntfsb_mkntfs_reset_state();
     reset_getopt();

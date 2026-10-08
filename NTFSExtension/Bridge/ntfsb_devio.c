@@ -12,6 +12,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>  /* libntfs-3g headers need it without config.h */
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>

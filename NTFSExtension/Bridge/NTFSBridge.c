@@ -1071,6 +1071,7 @@ typedef struct readdir_ctx {
     ntfsb_volume *v;
     ntfsb_dirent_fn fn;
     void *fn_ctx;
+    s64 min_pos;     /* entries before the caller's cookie are re-scanned, not reported */
     bool stopped;
     int err;
     char name[NTFSB_MAX_NAME_UTF8];
@@ -1106,6 +1107,9 @@ static int readdir_filldir(void *dirent, const ntfschar *name, const int name_le
     readdir_ctx *rc = dirent;
     uint64_t ino = MREF(mref);
 
+    if (pos < rc->min_pos)
+        return 0;
+
     /* 8.3 aliases share the inode of the long name listed next to them. */
     if (name_type == FILE_NAME_DOS)
         return 0;
@@ -1138,7 +1142,8 @@ int ntfsb_readdir(ntfsb_volume *vol, uint64_t dir_ino, uint64_t cookie,
         goto out;
 
     /* A cookie past the end of the index cannot have come from us. */
-    s64 end = vol->vol->mft_record_size;
+    const s64 mrs = vol->vol->mft_record_size;
+    s64 end = mrs;
     ntfs_attr *ia = ntfs_attr_open(dir_ni, AT_INDEX_ALLOCATION, NTFS_INDEX_I30, 4);
     if (ia) {
         end += ia->data_size;
@@ -1149,9 +1154,43 @@ int ntfsb_readdir(ntfsb_volume *vol, uint64_t dir_ino, uint64_t cookie,
         ntfs_inode_close(dir_ni);
         goto out;
     }
+    if (cookie == (uint64_t)end) {
+        /* Only produced after the last entry of the last index block. */
+        err = close_inode(dir_ni);
+        if (!err && out_eof)
+            *out_eof = true;
+        goto out;
+    }
 
-    readdir_ctx rc = { .v = vol, .fn = fn, .fn_ctx = ctx };
+    readdir_ctx rc = { .v = vol, .fn = fn, .fn_ctx = ctx, .min_pos = (s64)cookie };
     s64 pos = (s64)cookie;
+    if (pos >= mrs) {
+        /*
+         * libntfs-3g 2022.10.3 bug: when ntfs_readdir() starts inside
+         * $INDEX_ALLOCATION at block n, it reads the $BITMAP from byte n/8
+         * but indexes it from bit 0 instead of bit n%8, so for n%8 != 0 it
+         * tests the wrong "in use" bits and eventually reads a block past
+         * the end (EIO). Start at the first block of that bitmap byte
+         * instead, and drop the re-scanned entries before the cookie
+         * (rc.min_pos) in readdir_filldir().
+         */
+        INDEX_ROOT ir;
+        ntfs_attr *ra = ntfs_attr_open(dir_ni, AT_INDEX_ROOT, NTFS_INDEX_I30, 4);
+        s64 got = ra ? ntfs_attr_pread(ra, 0, sizeof(ir), &ir) : -1;
+        if (got != (s64)sizeof(ir))
+            err = errno_or(EIO);
+        if (ra)
+            ntfs_attr_close(ra);
+        u32 block = err ? 0 : le32_to_cpu(ir.index_block_size);
+        if (!err && (block < NTFS_BLOCK_SIZE || (block & (block - 1))))
+            err = EIO;
+        if (err) {
+            ntfs_inode_close(dir_ni);
+            goto out;
+        }
+        s64 span = (s64)block * 8;
+        pos = mrs + ((pos - mrs) / span) * span;
+    }
     /*
      * With ignore-case enabled libntfs-3g lowercases every name it lists.
      * We want case-preserving listings with case-insensitive lookups, so

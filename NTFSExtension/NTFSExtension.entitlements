@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  FSKit module entitlements.
+  - com.apple.developer.fskit.fsmodule: required; fskitd refuses to load a module
+    whose signature/provisioning profile lacks it. Documented at
+    https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.fskit.fsmodule
+    (the key is ".fsmodule", not plain "com.apple.developer.fskit").
+  - com.apple.security.app-sandbox: FSKit modules run sandboxed. The block device
+    is opened by fskitd and handed to us as FSBlockDeviceResource, so no file or
+    device entitlements are needed.
+  No app group: the host app and the extension share no state (see
+  docs/FSKIT_MANIFEST.md "Entitlements").
+-->
+<plist version="1.0">
+<dict>
+	<key>com.apple.developer.fskit.fsmodule</key>
+	<true/>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+</dict>
+</plist>

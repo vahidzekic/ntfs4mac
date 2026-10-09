@@ -55,6 +55,21 @@ PKG_ID="com.vahidzekic.ntfs4mac.pkg"
 
 command -v xcodegen >/dev/null || die "xcodegen not found (brew install xcodegen)"
 
+# productbuild and notarytool need local credentials; check them before the
+# long build instead of failing at the end.
+if [[ -n "${DEVELOPER_ID_INSTALLER:-}" ]]; then
+    security find-identity -v | grep -qF "$DEVELOPER_ID_INSTALLER" || die "\
+no '$DEVELOPER_ID_INSTALLER' identity in the keychain.
+Create it in Xcode > Settings > Accounts > (team) > Manage Certificates > + >
+Developer ID Installer (Account Holder only), then check with:
+  security find-identity -v | grep 'Developer ID Installer'"
+fi
+if [[ -n "${NOTARY_PROFILE:-}" ]]; then
+    xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1 || die "\
+notary profile '$NOTARY_PROFILE' not found or invalid. Create it with:
+  xcrun notarytool store-credentials $NOTARY_PROFILE --apple-id <apple-id> --team-id $DEVELOPMENT_TEAM"
+fi
+
 # 1. Third-party libraries ------------------------------------------------------
 LIB="$ROOT/ThirdParty/ntfs-3g/lib"
 if [[ ! -f "$LIB/libntfs-3g.a" || ! -f "$LIB/libmkntfs.a" ]]; then
@@ -139,8 +154,14 @@ chmod 755 "$PAYLOAD/Library/Filesystems/ntfs4mac.fs/Contents/Resources/"*_ntfs4m
     "$PAYLOAD/Library/Filesystems/ntfs4mac.fs/Contents/Info.plist"
 FS_SIGN_ID="-"
 if [[ "$SIGNING" == "developer-id" ]]; then
+    # Xcode's export can sign the app with a cloud-managed Developer ID
+    # certificate, so a local identity may not exist. The fs bundle holds only
+    # a plist and shell scripts (no Mach-O), so an ad-hoc signature is enough.
     FS_SIGN_ID="$(security find-identity -v -p codesigning | awk -F'"' "/Developer ID Application:.*\\($DEVELOPMENT_TEAM\\)/ {print \$2; exit}")"
-    [[ -n "$FS_SIGN_ID" ]] || die "no Developer ID Application identity for team $DEVELOPMENT_TEAM"
+    if [[ -z "$FS_SIGN_ID" ]]; then
+        echo "    no local Developer ID Application identity; signing ntfs4mac.fs ad hoc" >&2
+        FS_SIGN_ID="-"
+    fi
 fi
 if [[ "$FS_SIGN_ID" == "-" ]]; then
     codesign --force --sign - "$PAYLOAD/Library/Filesystems/ntfs4mac.fs"

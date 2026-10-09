@@ -19,6 +19,7 @@ log() { printf '\n==> %s\n' "$*"; }
 if [[ "${1:-}" == "--uninstall" ]]; then
     log "removing $DEST"
     sudo rm -rf "$DEST"
+    sudo killall storagekitd 2>/dev/null || true
     exit 0
 fi
 
@@ -33,6 +34,9 @@ sudo chmod 755 "$DEST/Contents/Resources/"*_ntfs4mac
 # Ad-hoc signature so the bundle has a valid (if anonymous) code signature.
 sudo codesign --force --deep --sign - "$DEST" >/dev/null 2>&1 || \
     echo "warning: ad-hoc codesign failed; continuing unsigned" >&2
+
+# storagekitd (behind diskutil and Disk Utility) caches the file-system list.
+sudo killall storagekitd 2>/dev/null || true
 
 log "diskutil listFilesystems"
 diskutil listFilesystems | grep -i -E "PERSONALITY|NTFS" || true

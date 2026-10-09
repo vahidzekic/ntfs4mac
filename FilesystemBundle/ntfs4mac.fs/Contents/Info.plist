@@ -44,6 +44,8 @@
 		<dict>
 			<key>FSName</key>
 			<string>NTFS</string>
+			<key>FSSubType</key>
+			<integer>0</integer>
 			<key>FSFormatExecutable</key>
 			<string>newfs_ntfs4mac</string>
 			<key>FSFormatArguments</key>

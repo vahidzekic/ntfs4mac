@@ -393,6 +393,7 @@ faster than the install/enable/mount cycle.
 | `mount -F` on a **physical** disk: `EACCES` opening `/dev/rdiskN` | Known FSKit permission issue, acknowledged by DTS | Test with `hdiutil`-attached images or RAM disks; for real disks use Disk Arbitration (`diskutil mount`) |
 | Volume mounts read-only as plain `ntfs`, not `ntfs4mac` | Apple's kext driver won the probe | `diskutil unmount` then `mount -F -t ntfs4mac …` or remount (§6) |
 | `ECONNREFUSED` (61) from `ReallyMountVolume` after changing `FSShortName` | Stale per-volume state in `fskitd` | `sudo killall fskitd` |
+| `mount: Unable to invoke task` / `Invalid argument` (22) right after `umount` of the same device | FSKit tears the previous volume down asynchronously after `umount`; a mount sent before that finishes is rejected | Wait a few seconds (`sleep 3`) and mount again. Observed on macOS 26.5 with a RAM disk; the second mount succeeds after the pause |
 | `mount` hangs | Extension paused in a debugger or deadlocked | Detach the debugger; check the bridge's per-volume mutex; `pkill -f NTFSExtension.appex` |
 | `EPERM` on read-write mount | Volume is hibernated / Fast Startup or unclean | Mount `-o rdonly`, or `-o remove_hiberfile` / `-o recover` (both write to the volume), or shut Windows down fully |
 | Disk Utility shows the volume as "Unknown" | `FSShortName` `ntfs4mac` doesn't map to a `/System/Library/Filesystems` bundle | Expected; see docs/FSKIT_MANIFEST.md "FSShortName and personality: decision" |

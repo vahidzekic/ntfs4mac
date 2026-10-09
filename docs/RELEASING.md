@@ -49,16 +49,19 @@ NOTARY_PROFILE=ntfs4mac-notary \
 DEVELOPMENT_TEAM=MW256GPMA4 ./scripts/make-release.sh
 ```
 
+Add `ARCHS=x86_64` for an Intel-only installer (`NTFS4Mac-<version>-intel.pkg`)
+or `ARCHS=arm64` for Apple Silicon; the default is universal.
+
 Output in `build/release/`: `NTFS4Mac-<version>.pkg`, the libntfs-3g source
 tarball (the GPL requires shipping or offering it), and `SHA256SUMS`.
 
 ## Test the installer before publishing
 
 ```sh
-sudo installer -pkg build/release/NTFS4Mac-0.1.0.pkg -target /
+sudo installer -pkg build/release/NTFS4Mac-0.1.0*.pkg -target /
 diskutil listFilesystems | grep NTFS4Mac
-pkgutil --check-signature build/release/NTFS4Mac-0.1.0.pkg
-spctl -a -vv -t install build/release/NTFS4Mac-0.1.0.pkg   # "accepted" once notarized
+pkgutil --check-signature build/release/NTFS4Mac-0.1.0*.pkg
+spctl -a -vv -t install build/release/NTFS4Mac-0.1.0*.pkg   # "accepted" once notarized
 ```
 
 Enable the extension (By Category), format a RAM disk from Disk Utility, copy
@@ -70,7 +73,7 @@ files in Finder, eject.
 git tag -a v0.1.0 -m "NTFS4Mac 0.1.0" && git push origin v0.1.0
 gh release create v0.1.0 --prerelease --title "NTFS4Mac 0.1.0" \
    --notes-file docs/release-notes/v0.1.0.md \
-   build/release/NTFS4Mac-0.1.0.pkg build/release/*.tgz build/release/SHA256SUMS
+   build/release/NTFS4Mac-0.1.0*.pkg build/release/*.tgz build/release/SHA256SUMS
 ```
 
 Without `gh`: GitHub › Releases › Draft a new release, pick the tag, paste
@@ -83,6 +86,7 @@ only runs on Macs registered to the team.
 ## New version
 
 Bump `MARKETING_VERSION` (and `CURRENT_PROJECT_VERSION`) in `project.yml`,
+move the `[Unreleased]` entries in `CHANGELOG.md` under the new version,
 add `docs/release-notes/v<version>.md`, then repeat Build/Publish.
 
 ## Uninstall

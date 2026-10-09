@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NTFS4Mac – Free Read-Write NTFS Driver for Mac (Apple Silicon &amp; Intel)</title>
+<meta name="description" content="NTFS4Mac is a free, open-source NTFS driver for macOS. Read and write Windows NTFS drives and format disks as NTFS in Disk Utility on Apple Silicon (M1, M2, M3, M4) and Intel Macs. Built on Apple FSKit and libntfs-3g – no kernel extension, no macFUSE.">
+<meta name="keywords" content="NTFS for Mac, NTFS Mac free, read write NTFS macOS, NTFS driver Mac, format NTFS Mac, NTFS Apple Silicon, NTFS M1 M2 M3 M4, Disk Utility NTFS, FSKit NTFS, ntfs-3g Mac, Tuxera alternative, Paragon NTFS alternative">
+<meta name="author" content="Vahid Zekic">
+<link rel="canonical" href="https://vahidzekic.github.io/ntfs4mac/">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<!-- Google Search Console: paste the verification meta tag here, e.g.
+<meta name="google-site-verification" content="...">
+-->
+<meta property="og:type" content="website">
+<meta property="og:title" content="NTFS4Mac – Free read-write NTFS for macOS">
+<meta property="og:description" content="Read, write and format NTFS drives on Apple Silicon and Intel Macs. Open source, built on Apple FSKit and libntfs-3g.">
+<meta property="og:url" content="https://vahidzekic.github.io/ntfs4mac/">
+<meta property="og:image" content="https://vahidzekic.github.io/ntfs4mac/social.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NTFS4Mac – Free read-write NTFS for macOS">
+<meta name="twitter:description" content="Read, write and format NTFS drives on Apple Silicon and Intel Macs. Open source, FSKit + libntfs-3g.">
+<meta name="twitter:image" content="https://vahidzekic.github.io/ntfs4mac/social.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "NTFS4Mac",
+  "operatingSystem": "macOS 15.4 or later",
+  "applicationCategory": "UtilitiesApplication",
+  "description": "Free, open-source read-write NTFS driver for macOS built on Apple FSKit and libntfs-3g. Adds NTFS to Disk Utility.",
+  "url": "https://vahidzekic.github.io/ntfs4mac/",
+  "downloadUrl": "https://github.com/vahidzekic/ntfs4mac/releases",
+  "image": "https://vahidzekic.github.io/ntfs4mac/icon.png",
+  "license": "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html",
+  "author": {"@type": "Person", "name": "Vahid Zekic", "url": "https://github.com/vahidzekic"},
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}
+}
+</script>
+<style>
+:root {
+  --bg: #f6f8fc; --fg: #0d1b3e; --muted: #4a5878; --card: #ffffff;
+  --line: #dde3ef; --accent: #1f6cf0; --accent-fg: #ffffff; --code: #eef2f9;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0a1430; --fg: #e8eeff; --muted: #9fb0d6; --card: #111d40;
+          --line: #22305a; --accent: #4b8dff; --accent-fg: #ffffff; --code: #0e1836; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg);
+       font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif; }
+a { color: var(--accent); }
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+header { text-align: center; padding: 64px 0 40px; }
+header img { width: 140px; height: 140px; }
+h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); margin: 12px 0 6px; letter-spacing: -0.02em; }
+.tagline { font-size: 1.25rem; color: var(--muted); margin: 0 auto 26px; max-width: 640px; }
+.btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn { display: inline-block; padding: 12px 22px; border-radius: 12px; font-weight: 600;
+       text-decoration: none; border: 1px solid var(--line); color: var(--fg); background: var(--card); }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.small { font-size: .9rem; color: var(--muted); margin-top: 14px; }
+section { padding: 34px 0; border-top: 1px solid var(--line); }
+h2 { font-size: 1.7rem; margin: 0 0 18px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+.card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.card p { margin: 0; color: var(--muted); font-size: .97rem; }
+figure { margin: 0 0 26px; text-align: center; }
+figure img { max-width: 100%; border-radius: 12px; border: 1px solid var(--line); }
+figcaption { color: var(--muted); font-size: .92rem; margin-top: 6px; }
+ol li { margin-bottom: 8px; }
+code, pre { background: var(--code); border-radius: 8px; font: 14px/1.5 ui-monospace, Menlo, monospace; }
+code { padding: 2px 6px; overflow-wrap: anywhere; }
+pre { padding: 14px 16px; overflow-x: auto; }
+details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; }
+summary { font-weight: 600; cursor: pointer; }
+footer { padding: 34px 0 60px; color: var(--muted); font-size: .92rem; text-align: center; border-top: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<header class="wrap">
+  <img src="icon.png" alt="NTFS4Mac icon">
+  <h1>NTFS4Mac</h1>
+  <p class="tagline">Free, open-source <strong>read-write NTFS for Mac</strong>. Use Windows drives in Finder and format disks as NTFS in Disk Utility – on Apple Silicon and Intel.</p>
+  <div class="btns">
+    <a class="btn primary" href="https://github.com/vahidzekic/ntfs4mac/releases">Download for macOS</a>
+    <a class="btn" href="https://github.com/vahidzekic/ntfs4mac">Source on GitHub</a>
+  </div>
+  <p class="small">Preview release · macOS 15.4+ (macOS 26 recommended) · GPL-2.0-or-later · by Vahid Zekic</p>
+</header>
+
+<main class="wrap">
+<section>
+  <h2>Why NTFS4Mac?</h2>
+  <div class="grid">
+    <div class="card"><h3>Read &amp; write NTFS</h3><p>Copy, edit, rename and delete files on Windows-formatted drives straight from Finder.</p></div>
+    <div class="card"><h3>NTFS in Disk Utility</h3><p>Erase › Format › <b>NTFS</b> – or <code>diskutil eraseDisk NTFS4Mac</code> from Terminal.</p></div>
+    <div class="card"><h3>No kernel extension</h3><p>Runs in user space on Apple's FSKit. No macFUSE, no reduced security, no Recovery-mode changes.</p></div>
+    <div class="card"><h3>Apple Silicon &amp; Intel</h3><p>One universal, signed and notarized installer for M1, M2, M3, M4 and Intel Macs.</p></div>
+    <div class="card"><h3>Proven NTFS engine</h3><p>Uses libntfs-3g, the NTFS implementation trusted on Linux for over 15 years.</p></div>
+    <div class="card"><h3>Free &amp; open source</h3><p>GPL-licensed. A free alternative to paid NTFS drivers for Mac.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Screenshots</h2>
+  <figure><img src="images/disk-utility-format.png" alt="Disk Utility Erase dialog with NTFS in the Format menu" loading="lazy"><figcaption>Format a drive as NTFS directly in Disk Utility</figcaption></figure>
+  <figure><img src="images/finder.png" alt="Finder showing an NTFS volume, Get Info reports Windows NT File System (NTFS)" loading="lazy"><figcaption>Read-write NTFS volumes in Finder</figcaption></figure>
+  <figure><img src="images/app.png" alt="NTFS4Mac app with the extension enabled" loading="lazy"><figcaption>The NTFS4Mac app shows the extension status</figcaption></figure>
+</section>
+
+<section>
+  <h2>Install</h2>
+  <ol>
+    <li>Download the latest <code>NTFS4Mac-…pkg</code> from <a href="https://github.com/vahidzekic/ntfs4mac/releases">GitHub Releases</a> and open it.</li>
+    <li>Open <b>System Settings › General › Login Items &amp; Extensions</b>, choose <b>By Category</b>, click ⓘ next to <b>File System Extensions</b> and turn on <b>NTFS (ntfs4mac)</b>.</li>
+    <li>Connect an NTFS drive, or format one as <b>NTFS</b> in Disk Utility.</li>
+  </ol>
+  <p class="small">Back up important data before writing to NTFS. Shut Windows down fully (disable Fast Startup) before moving a drive to the Mac.</p>
+</section>
+
+<section>
+  <h2>FAQ</h2>
+  <details><summary>Can a Mac write to NTFS drives?</summary><p>macOS only reads NTFS out of the box. NTFS4Mac adds full read-write support and NTFS formatting through Apple's FSKit.</p></details>
+  <details><summary>Does it work on Apple Silicon (M1/M2/M3/M4)?</summary><p>Yes. The installer is universal. Read-write mounting needs macOS 26 or later; on macOS 15 drives can be formatted but mount read-only due to a macOS bug.</p></details>
+  <details><summary>Do I need macFUSE or a kernel extension?</summary><p>No. NTFS4Mac is an FSKit file-system extension that runs in user space.</p></details>
+  <details><summary>Is it free?</summary><p>Yes – free and open source under the GNU GPL v2 or later.</p></details>
+  <details><summary>How do I uninstall it?</summary><p>Run <code>scripts/uninstall.sh</code> from the repository, or delete <code>/Applications/NTFS4Mac.app</code> and <code>/Library/Filesystems/ntfs4mac.fs</code>.</p></details>
+</section>
+</main>
+
+<footer class="wrap">
+  NTFS4Mac © 2026 <a href="https://github.com/vahidzekic">Vahid Zekic</a> · GPL-2.0-or-later ·
+  built on <a href="https://github.com/tuxera/ntfs-3g">ntfs-3g</a> ·
+  <a href="https://github.com/vahidzekic/ntfs4mac/blob/main/CHANGELOG.md">Changelog</a>
+</footer>
+</body>
+</html>

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://vahidzekic.github.io/ntfs4mac/sitemap.xml

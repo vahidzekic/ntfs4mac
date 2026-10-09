@@ -98,6 +98,9 @@ build_args=(
     -destination "platform=macOS"
     -derivedDataPath "$DERIVED"
     -allowProvisioningUpdates
+    # Registers this Mac in the developer account if it isn't yet; without it
+    # automatic signing fails with "Device ... isn't registered".
+    -allowProvisioningDeviceRegistration
 )
 [[ -n "${DEVELOPMENT_TEAM:-}" ]] && build_args+=("DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM")
 if command -v xcbeautify >/dev/null; then

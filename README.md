@@ -350,6 +350,7 @@ By hand:
 xcodegen generate                       # → NTFS4Mac.xcodeproj
 xcodebuild -project NTFS4Mac.xcodeproj -scheme NTFS4Mac -configuration Debug \
   -destination platform=macOS -derivedDataPath build/DerivedData -allowProvisioningUpdates \
+  -allowProvisioningDeviceRegistration \
   DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM build
 ```
 

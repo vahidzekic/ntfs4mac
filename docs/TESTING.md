@@ -105,6 +105,7 @@ Or from the command line (this is what `scripts/dev-install.sh` does):
 ```sh
 xcodebuild -project NTFS4Mac.xcodeproj -scheme NTFS4Mac -configuration Debug \
   -destination platform=macOS -derivedDataPath build/DerivedData -allowProvisioningUpdates \
+  -allowProvisioningDeviceRegistration \
   DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM build
 ```
 

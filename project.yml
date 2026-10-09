@@ -76,7 +76,10 @@ targets:
       - path: NTFS4Mac
         includes:
           - "**/*.swift"
-          - "Assets.xcassets"
+      # Separate entry: an `includes` glob is matched against individual files,
+      # so "Assets.xcassets" there never matched the catalog's contents.
+      - path: NTFS4Mac/Assets.xcassets
+        buildPhase: resources
     dependencies:
       - target: NTFSExtension
         embed: true

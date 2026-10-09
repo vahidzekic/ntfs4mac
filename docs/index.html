@@ -65,7 +65,7 @@ h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); margin: 12px 0 6px; letter-spacing: 
 .small { font-size: .9rem; color: var(--muted); margin-top: 14px; }
 section { padding: 34px 0; border-top: 1px solid var(--line); }
 h2 { font-size: 1.7rem; margin: 0 0 18px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
 .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
 .card p { margin: 0; color: var(--muted); font-size: .97rem; }
@@ -74,7 +74,7 @@ figure img { max-width: 100%; border-radius: 12px; border: 1px solid var(--line)
 figcaption { color: var(--muted); font-size: .92rem; margin-top: 6px; }
 ol li { margin-bottom: 8px; }
 code, pre { background: var(--code); border-radius: 8px; font: 14px/1.5 ui-monospace, Menlo, monospace; }
-code { padding: 2px 6px; }
+code { padding: 2px 6px; overflow-wrap: anywhere; }
 pre { padding: 14px 16px; overflow-x: auto; }
 details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; }
 summary { font-weight: 600; cursor: pointer; }

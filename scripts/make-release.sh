@@ -176,7 +176,10 @@ pkgbuild --analyze --root "$PAYLOAD" "$COMPONENTS"
 # Install exactly where we say, never into a copy of the app found elsewhere.
 i=0
 while /usr/libexec/PlistBuddy -c "Print :$i" "$COMPONENTS" >/dev/null 2>&1; do
-    /usr/libexec/PlistBuddy -c "Set :$i:BundleIsRelocatable false" "$COMPONENTS"
+    # The analysed entries don't always carry the key (e.g. the fs bundle):
+    # drop it if present, then add it with the value we want.
+    /usr/libexec/PlistBuddy -c "Delete :$i:BundleIsRelocatable" "$COMPONENTS" >/dev/null 2>&1 || true
+    /usr/libexec/PlistBuddy -c "Add :$i:BundleIsRelocatable bool false" "$COMPONENTS"
     i=$((i + 1))
 done
 pkgbuild \

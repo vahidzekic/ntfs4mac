@@ -1,4 +1,4 @@
-# ntfs4mac
+# NTFS4Mac
 
 A native, user-space **read/write NTFS driver for macOS 15.4+**, built as an
 Apple **FSKit** file-system module around **libntfs-3g** (the engine behind

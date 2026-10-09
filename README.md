@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/icon.png" width="160" alt="NTFS4Mac icon"></p>
+
 # NTFS4Mac
 
 **Author / developer: [Vahid Zekic](https://github.com/vahidzekic)**

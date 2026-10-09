@@ -90,7 +90,8 @@ build_args=(
     -project "$ROOT/$APP_NAME.xcodeproj"
     -scheme "$APP_NAME"
     -configuration "$CONFIG"
-    -arch arm64
+    # The destination already selects arm64; xcodebuild rejects -arch together
+    # with an arch-qualified -destination.
     -destination "platform=macOS,arch=arm64"
     -derivedDataPath "$DERIVED"
     -allowProvisioningUpdates

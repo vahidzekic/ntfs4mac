@@ -21,6 +21,13 @@ macOS 15.7.
   user on macOS 15. macOS 26 is unchanged.
 
 ### Known issues
+- **macOS 15: read-write mounting does not work.** On macOS 15.7.9,
+  `mount -F -t ntfs4mac` fails with "Couldn't communicate with a helper
+  application": `fskitd` rejects the `mountVolume:` message sent by Apple's
+  own `mount` tool (an XPC interface mismatch inside macOS; the NTFS4Mac
+  volume itself activates correctly). Automount picks Apple's built-in
+  read-only NTFS driver instead. Formatting works. **Use macOS 26 or later
+  for read-write NTFS.**
 - On macOS 15 the NTFS4Mac app can show "Not registered with FSKit" even
   when the extension is enabled and working.
 

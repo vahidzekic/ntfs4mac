@@ -32,6 +32,8 @@ enum AppConstants {
 
     static let gplURL = URL(string: "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html")!
     static let ntfs3gSourceURL = URL(string: "https://github.com/tuxera/ntfs-3g")!
+    static let projectURL = URL(string: "https://github.com/vahidzekic/ntfs4mac")!
+    static let author = "Vahid Zekic"
 }
 
 // MARK: - App
@@ -47,6 +49,43 @@ struct NTFS4MacApp: App {
                 .frame(minWidth: 560, idealWidth: 620, minHeight: 560, idealHeight: 680)
         }
         .windowResizability(.contentSize)
+        .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About NTFS4Mac") { AboutPanel.show() }
+            }
+        }
+    }
+}
+
+// MARK: - About panel
+
+/// Standard About panel with the author and project link in the credits.
+@MainActor
+enum AboutPanel {
+    static func show() {
+        let centered = NSMutableParagraphStyle()
+        centered.alignment = .center
+        let body: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 11),
+            .foregroundColor: NSColor.secondaryLabelColor,
+            .paragraphStyle: centered,
+        ]
+        let credits = NSMutableAttributedString(
+            string: "Developed by \(AppConstants.author)\n",
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 12, weight: .semibold),
+                .foregroundColor: NSColor.labelColor,
+                .paragraphStyle: centered,
+            ])
+        credits.append(NSAttributedString(
+            string: "github.com/vahidzekic/ntfs4mac",
+            attributes: body.merging([.link: AppConstants.projectURL]) { $1 }))
+        credits.append(NSAttributedString(
+            string: "\n\nBuilt on Apple FSKit and libntfs-3g from the NTFS-3G project. "
+                + "Free software under the GNU GPL v2 or later.",
+            attributes: body))
+        NSApplication.shared.orderFrontStandardAboutPanel(options: [.credits: credits])
+        NSApplication.shared.activate()
     }
 }
 
@@ -190,6 +229,13 @@ struct ContentView: View {
                     .font(.largeTitle.bold())
                 Text("Read-write NTFS for macOS, in user space, via FSKit and libntfs-3g.")
                     .foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    Text("by \(AppConstants.author)")
+                    Text("·")
+                    Link("GitHub", destination: AppConstants.projectURL)
+                }
+                .font(.callout)
+                .foregroundStyle(.secondary)
             }
         }
     }
@@ -298,6 +344,8 @@ struct UsageCard: View {
 
 struct LicenseCard: View {
     private let notice = """
+    NTFS4Mac — Copyright © 2026 Vahid Zekic.
+
     NTFS4Mac includes libntfs-3g and mkntfs from the NTFS-3G project \
     (https://github.com/tuxera/ntfs-3g), Copyright © the NTFS-3G and \
     Linux-NTFS developers, including Tuxera Inc.

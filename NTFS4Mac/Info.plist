@@ -25,7 +25,7 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>ntfs4mac is free software under the GNU GPL v2 or later and comes with NO WARRANTY. Includes libntfs-3g and mkntfs (GPL-2.0-or-later).</string>
+	<string>Copyright © 2026 Vahid Zekic. Free software under the GNU GPL v2 or later, with NO WARRANTY. Includes libntfs-3g and mkntfs (GPL-2.0-or-later).</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

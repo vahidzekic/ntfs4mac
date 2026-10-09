@@ -137,6 +137,11 @@ use it.
 
 ## Known limitations
 
+- **macOS 15: read-only only.** On macOS 15 (tested 15.7.9) Apple's `mount`
+  tool and `fskitd` disagree on the XPC mount message, so third-party FSKit
+  volumes cannot be mounted (`Couldn't communicate with a helper application`)
+  and Apple's read-only NTFS driver takes over. Formatting works. Use
+  **macOS 26 or later** for read-write NTFS.
 - **Limited real-world testing.** See the status note at the top: tested on
   RAM disks on one Intel Mac so far.
 - **No full `chkdsk`/repair.** The check can detect a dirty, unclean or

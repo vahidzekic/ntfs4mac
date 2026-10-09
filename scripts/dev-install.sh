@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# dev-install.sh — build NTFS4Mac (Debug, arm64), install it to /Applications
+# dev-install.sh — build NTFS4Mac (Debug, this Mac's architecture), install it to /Applications
 # and register the NTFSExtension FSKit module.
 #
 # Usage:  DEVELOPMENT_TEAM=ABCDE12345 scripts/dev-install.sh [options]
@@ -85,14 +85,17 @@ log "xcodegen generate"
 (cd "$ROOT" && xcodegen generate --spec project.yml)
 
 # 3. Build ---------------------------------------------------------------------
-log "xcodebuild ($CONFIG, arm64)"
+# Build for the architecture of this Mac (arm64 on Apple Silicon, x86_64 on
+# Intel). ONLY_ACTIVE_ARCH limits a Debug build to that slice.
+HOST_ARCH="$(uname -m)"
+log "xcodebuild ($CONFIG, $HOST_ARCH)"
 build_args=(
     -project "$ROOT/$APP_NAME.xcodeproj"
     -scheme "$APP_NAME"
     -configuration "$CONFIG"
-    # The destination already selects arm64; xcodebuild rejects -arch together
-    # with an arch-qualified -destination.
-    -destination "platform=macOS,arch=arm64"
+    # "platform=macOS" resolves to "My Mac"; don't pin an arch here (Intel Macs
+    # report x86_64h, and xcodebuild rejects -arch next to an arch destination).
+    -destination "platform=macOS"
     -derivedDataPath "$DERIVED"
     -allowProvisioningUpdates
 )

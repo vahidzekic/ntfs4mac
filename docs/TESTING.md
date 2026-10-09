@@ -1,6 +1,6 @@
 # Compilation, Linking & Local Testing Guide
 
-This guide takes an Apple Silicon Mac from a clean checkout to a mounted,
+This guide takes a Mac (Apple Silicon or Intel) from a clean checkout to a mounted,
 writable NTFS test volume served by `NTFSExtension`. Each step has a command
 and the expected result. Where a statement rests on a forum post or another
 project rather than on Apple documentation, it is marked **(unverified)** and
@@ -23,7 +23,7 @@ Identifiers used throughout:
 
 | Requirement | Why / notes |
 |-------------|-------------|
-| Mac with Apple Silicon | Builds are `arm64` by default. Universal builds work too (`ARCHS="arm64 x86_64"`); the libraries are built universal. |
+| Mac (Apple Silicon or Intel) | The project builds universal (`arm64` + `x86_64`); Debug builds only the running Mac's architecture. The libraries are built universal. |
 | **macOS 15.4 or later**; **15.6+ or 26.x recommended** | FSKit is public from 15.4. On 15.4/15.5 Disk Arbitration fails to probe FSKit modules (FB17772372, fixed in 15.6 per Apple DTS), so automount only works from 15.6. `mount -F` works on 15.4. |
 | **Xcode 16.3+** (or Xcode 26.x) | The FSKit SDK and the *File System Extension* target template first shipped in Xcode 16.3. `xcode-select -p` must point at it: `sudo xcode-select -s /Applications/Xcode.app` |
 | Homebrew tools | `brew install xcodegen autoconf automake libtool pkg-config gettext` (`xcbeautify` optional). Only `pkg-config` and `xcodegen` are strictly needed with the Tuxera tarball; autotools are needed for the GitHub fallback. |
@@ -104,7 +104,7 @@ Or from the command line (this is what `scripts/dev-install.sh` does):
 
 ```sh
 xcodebuild -project NTFS4Mac.xcodeproj -scheme NTFS4Mac -configuration Debug \
-  -arch arm64 -derivedDataPath build/DerivedData -allowProvisioningUpdates \
+  -destination platform=macOS -derivedDataPath build/DerivedData -allowProvisioningUpdates \
   DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM build
 ```
 

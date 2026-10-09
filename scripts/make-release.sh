@@ -20,12 +20,12 @@
 # Environment:
 #   DEVELOPMENT_TEAM        team ID (required)
 #   VERSION                 defaults to MARKETING_VERSION in project.yml
-#   ARCHS                   defaults to "arm64 x86_64" (universal)
+#   ARCHS                   "arm64 x86_64" (universal, default), "x86_64" (Intel) or "arm64"
 #   DEVELOPER_ID_INSTALLER  e.g. "Developer ID Installer: Name (TEAMID)"
 #   NOTARY_PROFILE          keychain profile from `xcrun notarytool store-credentials`
 #
 # Output (build/release/):
-#   NTFS4Mac-<version>.pkg                installer
+#   NTFS4Mac-<version>[-intel|-apple-silicon].pkg   installer
 #   ntfs-3g_ntfsprogs-<ver>.tgz           corresponding libntfs-3g source (GPL)
 #   SHA256SUMS
 set -euo pipefail
@@ -173,7 +173,14 @@ mkdir -p "$RES"
 cp "$ROOT/packaging/resources/"*.html "$RES/"
 cp "$ROOT/LICENSE" "$RES/LICENSE.txt"
 sed "s/@VERSION@/$VERSION/g" "$ROOT/packaging/Distribution.xml" > "$OUT/Distribution.xml"
-PKG="$OUT/NTFS4Mac-$VERSION.pkg"
+# Name the installer after its architectures: -intel / -apple-silicon, or
+# nothing for a universal build.
+case "$(echo "$ARCHS" | xargs)" in
+    x86_64) PKG_SUFFIX="-intel" ;;
+    arm64)  PKG_SUFFIX="-apple-silicon" ;;
+    *)      PKG_SUFFIX="" ;;
+esac
+PKG="$OUT/NTFS4Mac-$VERSION$PKG_SUFFIX.pkg"
 sign_args=()
 if [[ -n "${DEVELOPER_ID_INSTALLER:-}" ]]; then
     sign_args=(--sign "$DEVELOPER_ID_INSTALLER" --timestamp)

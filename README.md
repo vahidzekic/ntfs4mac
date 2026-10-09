@@ -21,7 +21,8 @@
   <a href="https://github.com/vahidzekic/ntfs4mac/releases"><b>Download</b></a> ·
   <a href="#screenshots">Screenshots</a> ·
   <a href="#quick-start">Build from source</a> ·
-  <a href="docs/TESTING.md">Testing guide</a>
+  <a href="docs/TESTING.md">Testing guide</a> ·
+  <a href="CHANGELOG.md">Changelog</a>
 </p>
 
 A native, user-space **read/write NTFS driver for macOS 15.4+**, built as an

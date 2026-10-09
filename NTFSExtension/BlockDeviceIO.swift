@@ -152,17 +152,20 @@ final class BlockDeviceIO: @unchecked Sendable {
         return Int64(done)
     }
 
-    /// Flushes the resource. Direct writes bypass the buffer cache, so this
-    /// mainly asks FSKit to push anything it holds for the device; it is a
-    /// cheap no-op when nothing is cached. Returns 0 or a positive errno.
+    /// Flushes the resource. All IO here goes through the direct
+    /// `read(into:)` / `write(from:)` calls, which bypass FSKit's metadata
+    /// cache, so there is nothing of ours for `metadataFlush()` to push.
+    /// A flush error is therefore logged but not reported as a failure:
+    /// treating it as fatal made mkntfs fail its final "Syncing device" step
+    /// (EIO from newfs_fskit) after the volume had been written completely.
+    /// Always returns 0.
     fileprivate func synchronize() -> Int32 {
         guard !readOnly else { return 0 }
         do {
             try resource.metadataFlush()
-            return 0
         } catch {
-            ioLog.error("device flush failed: \(error.localizedDescription, privacy: .public)")
-            return NTFSError.errnoValue(from: error)
+            ioLog.error("device flush failed (ignored, direct IO is uncached): \(error.localizedDescription, privacy: .public)")
         }
+        return 0
     }
 }

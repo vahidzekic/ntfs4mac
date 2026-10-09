@@ -464,6 +464,8 @@ static int mkntfs_op_open(struct ntfs_device *dev, int flags)
         errno = EBUSY;
         return -1;
     }
+    /* mkntfs' main() has installed its stdout/stderr log handler by now. */
+    ntfsb_log_install_mkntfs();
     ntfsb_devio *dio = ntfsb_devio_new(g_mkntfs_binding.io);
     if (!dio)
         return -1;

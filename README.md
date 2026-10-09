@@ -1,14 +1,35 @@
-<p align="center"><img src="docs/icon.png" width="160" alt="NTFS4Mac icon"></p>
+<p align="center">
+  <img src="docs/icon.png" width="180" alt="NTFS4Mac icon">
+</p>
 
-# NTFS4Mac
+<h1 align="center">NTFS4Mac</h1>
 
-**Author / developer: [Vahid Zekic](https://github.com/vahidzekic)**
+<p align="center">
+  <b>Native read-write NTFS for macOS — FSKit + libntfs-3g, no kernel extension, no macFUSE.</b><br>
+  by <a href="https://github.com/vahidzekic">Vahid Zekic</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-15.4%2B-blue?logo=apple" alt="macOS 15.4+">
+  <img src="https://img.shields.io/badge/Intel%20%7C%20Apple%20Silicon-universal-blue" alt="Universal">
+  <img src="https://img.shields.io/badge/FSKit-user%20space-0a2f80" alt="FSKit">
+  <img src="https://img.shields.io/badge/license-GPL--2.0--or--later-green" alt="GPL-2.0-or-later">
+  <img src="https://img.shields.io/badge/status-preview-orange" alt="Preview">
+</p>
+
+<p align="center">
+  <a href="https://github.com/vahidzekic/ntfs4mac/releases"><b>Download</b></a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#quick-start">Build from source</a> ·
+  <a href="docs/TESTING.md">Testing guide</a>
+</p>
 
 A native, user-space **read/write NTFS driver for macOS 15.4+**, built as an
 Apple **FSKit** file-system module around **libntfs-3g** (the engine behind
 ntfs-3g). It lets Finder, `mount` and Disk Arbitration (automount,
 `diskutil mount`) use Windows NTFS volumes for reading and writing, and it
-formats volumes as NTFS through FSKit's `newfs_fskit`. It does not need a
+adds **NTFS** to Disk Utility's Erase › Format menu (formatting runs
+`mkntfs` inside the extension). It does not need a
 kernel extension or macFUSE, and you do not have to lower system security to
 use it.
 
@@ -33,8 +54,33 @@ use it.
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/images/disk-utility-format.png" width="760" alt="Disk Utility Erase dialog with NTFS in the Format menu"><br>
+  <sub><b>Format as NTFS straight from Disk Utility</b> — Erase › Format › NTFS</sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/disk-utility-erase.png" width="760" alt="Disk Utility erase completed: formatting as NTFS through the FSKit module"><br>
+  <sub>The format runs <code>mkntfs</code> inside the FSKit extension and mounts the new volume</sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/finder.png" width="760" alt="Finder showing an NTFS volume with Get Info reporting Windows NT File System (NTFS)"><br>
+  <sub>Read-write in Finder; Get Info reports <i>Windows NT File System (NTFS)</i></sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/app.png" width="680" alt="NTFS4Mac app showing the extension enabled, with the About panel"><br>
+  <sub>The NTFS4Mac app shows whether the extension is enabled and how to turn it on</sub>
+</p>
+
+---
+
 ## Table of contents
 
+- [Screenshots](#screenshots)
 - [Features](#features)
 - [Known limitations](#known-limitations)
 - [Why FSKit?](#why-fskit)

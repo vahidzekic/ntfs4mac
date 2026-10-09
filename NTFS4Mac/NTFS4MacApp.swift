@@ -221,9 +221,9 @@ struct ContentView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: 14) {
-            Image(systemName: "externaldrive.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(.tint)
+            Image(nsImage: NSApplication.shared.applicationIconImage)
+                .resizable()
+                .frame(width: 64, height: 64)
             VStack(alignment: .leading, spacing: 2) {
                 Text("NTFS4Mac")
                     .font(.largeTitle.bold())

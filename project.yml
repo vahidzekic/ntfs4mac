@@ -76,6 +76,7 @@ targets:
       - path: NTFS4Mac
         includes:
           - "**/*.swift"
+          - "Assets.xcassets"
     dependencies:
       - target: NTFSExtension
         embed: true
@@ -88,6 +89,7 @@ targets:
       base:
         PRODUCT_NAME: NTFS4Mac
         PRODUCT_BUNDLE_IDENTIFIER: com.vahidzekic.ntfs4mac
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_FILE: NTFS4Mac/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: NTFS4Mac/NTFS4Mac.entitlements

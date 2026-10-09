@@ -75,4 +75,12 @@ int64_t ntfsb_devio_pread(ntfsb_devio *dio, void *buf, int64_t count, int64_t of
  */
 void ntfsb_mkntfs_bind(const ntfsb_io *io, ntfsb_write_observer observer, void *observer_ctx);
 
+/*
+ * Route libntfs-3g / mkntfs log output to the bridge's sink, including
+ * mkntfs' informational messages (defined in NTFSBridge.c). mkntfs' main()
+ * installs a stdout/stderr handler, which an app extension can't see, so
+ * the mkntfs device open re-installs this one.
+ */
+void ntfsb_log_install_mkntfs(void);
+
 #endif /* NTFSB_DEVIO_H */

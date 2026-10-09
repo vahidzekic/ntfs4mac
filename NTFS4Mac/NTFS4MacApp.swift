@@ -125,14 +125,39 @@ final class ExtensionStatusModel: ObservableObject {
         }
     }
 
+    /// Opens System Settings at Login Items & Extensions.
+    ///
+    /// `NSWorkspace.open(_:)` returns `true` as soon as Launch Services accepts
+    /// the URL, even when System Settings then ignores an unknown pane ID, and
+    /// from a sandboxed app opening the .app bundle by file URL can fail
+    /// silently. So: open the pane URL asynchronously with activation, and on
+    /// any error fall back to launching System Settings by bundle identifier.
     func openSettings() {
-        for candidate in AppConstants.settingsURLs {
-            if let url = URL(string: candidate), NSWorkspace.shared.open(url) {
-                return
+        Self.openSettingsPane(AppConstants.settingsURLs[...])
+    }
+
+    private static func openSettingsPane(_ candidates: ArraySlice<String>) {
+        guard let first = candidates.first, let url = URL(string: first) else {
+            launchSystemSettings()
+            return
+        }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        NSWorkspace.shared.open(url, configuration: configuration) { @Sendable app, error in
+            if app == nil || error != nil {
+                Task { @MainActor in openSettingsPane(candidates.dropFirst()) }
             }
         }
-        // Last resort: open System Settings itself.
-        NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/System Settings.app"))
+    }
+
+    private static func launchSystemSettings() {
+        let workspace = NSWorkspace.shared
+        guard let appURL = workspace.urlForApplication(withBundleIdentifier: "com.apple.systempreferences") else {
+            return
+        }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        workspace.openApplication(at: appURL, configuration: configuration) { @Sendable _, _ in }
     }
 }
 

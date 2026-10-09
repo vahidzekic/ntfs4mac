@@ -1,0 +1,5 @@
+#!/bin/sh
+# Remove the previous version so no stale files from older builds remain.
+rm -rf /Library/Filesystems/ntfs4mac.fs
+rm -rf /Applications/NTFS4Mac.app
+exit 0

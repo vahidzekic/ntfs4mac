@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- productbuild distribution for the NTFS4Mac installer. @VERSION@ is
+     substituted by scripts/make-release.sh. -->
+<installer-gui-script minSpecVersion="2">
+    <title>NTFS4Mac @VERSION@</title>
+    <organization>com.vahidzekic</organization>
+    <welcome file="welcome.html" mime-type="text/html"/>
+    <license file="LICENSE.txt" mime-type="text/plain"/>
+    <conclusion file="conclusion.html" mime-type="text/html"/>
+    <options customize="never" require-scripts="true" rootVolumeOnly="true" hostArchitectures="x86_64,arm64"/>
+    <domains enable_localSystem="true" enable_currentUserHome="false" enable_anywhere="false"/>
+    <volume-check>
+        <allowed-os-versions>
+            <os-version min="15.4"/>
+        </allowed-os-versions>
+    </volume-check>
+    <choices-outline>
+        <line choice="default">
+            <line choice="com.vahidzekic.ntfs4mac.pkg"/>
+        </line>
+    </choices-outline>
+    <choice id="default"/>
+    <choice id="com.vahidzekic.ntfs4mac.pkg" visible="false">
+        <pkg-ref id="com.vahidzekic.ntfs4mac.pkg"/>
+    </choice>
+    <pkg-ref id="com.vahidzekic.ntfs4mac.pkg" version="@VERSION@" onConclusion="none">NTFS4Mac-component.pkg</pkg-ref>
+</installer-gui-script>

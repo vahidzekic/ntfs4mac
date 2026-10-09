@@ -13,10 +13,11 @@ use it.
 >
 > **Status:** Work in progress. The C bridge over libntfs-3g is complete and
 > its host-side self-test passes (13064 checks at 512- and 4096-byte block
-> sizes, clean under ASan/UBSan on Linux). The Swift FSKit extension is
-> written against Apple's published API but **has not been compiled or run
-> yet** (no Mac was available), so expect build fixes on first contact with
-> Xcode.
+> sizes, clean under ASan/UBSan on Linux). The FSKit extension builds
+> with Xcode on macOS 26.5 and has been exercised on an Intel Mac with RAM
+> disks: format (`newfs_fskit` and `diskutil eraseDisk`), mount, read/write,
+> rename, symlinks, delete and remount. It has **not** yet been tested on
+> Apple Silicon or on disks formatted by Windows.
 >
 > **Data-loss warning:** Writing to NTFS from a non-Windows implementation
 > always carries some risk, and this project is new and has not been
@@ -57,6 +58,7 @@ use it.
 - [Project layout](#project-layout)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
+- [Installer and releases](#installer-and-releases)
 - [License](#license)
 - [Credits](#credits)
 
@@ -83,8 +85,8 @@ use it.
 
 ## Known limitations
 
-- **Swift side not yet built.** See the status note at the top. The C bridge
-  is tested; the FSKit layer is not.
+- **Limited real-world testing.** See the status note at the top: tested on
+  RAM disks on one Intel Mac so far.
 - **No full `chkdsk`/repair.** The check can detect a dirty, unclean or
   hibernated volume and can reset the journal (`-y`, or the default
   `recover` mount option), but it cannot repair a corrupted file system. Use
@@ -106,14 +108,11 @@ use it.
   given volume are serialised. Concurrent IO from many apps to the same
   volume will not scale. All data IO goes through user space (no
   kernel-offloaded IO).
-- **Not in Disk Utility's Format menu.** Disk Utility's Format pop-up and
-  `diskutil eraseVolume`/`eraseDisk` do not currently list third-party FSKit
-  personalities (per Apple DTS; unverified on the newest releases). Use
-  `newfs_fskit` — see [Check and format](#6-check-and-format).
-- **Volume kind may show as "Unknown"** in Disk Utility, because the short
-  name `ntfs4mac` matches no bundle in `/System/Library/Filesystems`.
-  `mount`, `df` and Finder's Get Info show `ntfs`. See
-  [Names](#names-ntfs4mac-vs-ntfs).
+- **Disk Utility needs a second install step.** Disk Utility and `diskutil`
+  take their format list from `*.fs` bundles, not from FSKit modules. Run
+  `scripts/install-fs-bundle.sh` once to install `/Library/Filesystems/ntfs4mac.fs`;
+  "NTFS" then appears in Erase › Format. See
+  [Check and format](#6-check-and-format).
 - **Physical disks with `mount -F`** can fail with `EACCES` opening
   `/dev/rdiskN` (a known FSKit permission issue acknowledged by Apple DTS).
   Use disk images or RAM disks for `mount -F` testing, and Disk Arbitration
@@ -349,7 +348,8 @@ By hand:
 ```sh
 xcodegen generate                       # → NTFS4Mac.xcodeproj
 xcodebuild -project NTFS4Mac.xcodeproj -scheme NTFS4Mac -configuration Debug \
-  -arch arm64 -derivedDataPath build/DerivedData -allowProvisioningUpdates \
+  -destination platform=macOS -derivedDataPath build/DerivedData -allowProvisioningUpdates \
+  -allowProvisioningDeviceRegistration \
   DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM build
 ```
 
@@ -447,18 +447,32 @@ newfs_fskit -t ntfs4mac -L DATA -c 65536 -f /dev/disk8         # 64 KiB clusters
 newfs_fskit -t ntfs4mac -L ARCHIVE -C /dev/disk8               # compression on
 ```
 
-**Disk Utility and `diskutil eraseVolume`/`eraseDisk`.** According to Apple
-DTS, `diskutil` does not currently have full FSKit integration, and the
-Format pop-up does not list third-party FSKit personalities (unverified on
-the newest releases). To see whether your macOS lists it:
+**Disk Utility and `diskutil eraseVolume`/`eraseDisk`.** Disk Utility and
+`diskutil` (through `storagekitd`) list formats from `*.fs` bundles that
+declare an `FSFormatExecutable`, as Apple's `exfat.fs` does; FSKit modules
+alone never show up. `FilesystemBundle/ntfs4mac.fs` is such a bundle: its
+`newfs_ntfs4mac`, `fsck_ntfs4mac` and `mount_ntfs4mac` helpers forward to
+`newfs_fskit`, `fsck_fskit` and `mount -F` for this module, running as the
+console user (FSKit enablement is per user). Install it once:
 
 ```sh
-diskutil listFilesystems | grep -i -E 'ntfs|NTFS4Mac'
+./scripts/install-fs-bundle.sh          # sudo; restarts storagekitd
+diskutil listFilesystems | grep NTFS4Mac
+#   NTFS4Mac                        NTFS
 ```
 
-If an `NTFS4Mac` row appears, `diskutil eraseVolume NTFS4Mac NTFSTEST
-/dev/diskXsY` is the command. Use the personality key `NTFS4Mac`: `NTFS`
-would resolve to Apple's read-only `ntfs.fs`, which cannot erase.
+Then reopen Disk Utility: **NTFS** is in Erase › Format. From Terminal:
+
+```sh
+diskutil eraseDisk   NTFS4Mac DATA GPT /dev/diskX     # whole disk, GPT + Microsoft Basic Data
+diskutil eraseVolume NTFS4Mac DATA /dev/diskXsY       # one partition
+```
+
+Verified on macOS 26.5 (Intel) with a RAM disk: `eraseDisk` created a
+GPT map with a Microsoft Basic Data partition, formatted it through the
+module and mounted it at `/Volumes/<name>` via FSKit. Use the personality key
+`NTFS4Mac`; `NTFS` resolves to Apple's read-only `ntfs.fs`, which cannot
+erase. `scripts/install-fs-bundle.sh --uninstall` removes the bundle.
 
 ## Mount options
 
@@ -658,15 +672,14 @@ mount resets the journal; `fsck_fskit -t ntfs4mac -y` does the same. Neither
 repairs corruption: run `chkdsk /f X:` in Windows.
 
 **NTFS is not in the Disk Utility Format menu / `diskutil eraseVolume NTFS`
-fails.** This is expected: Disk Utility and `diskutil` do not currently list
-third-party FSKit personalities (per Apple DTS). Format with
-`newfs_fskit -t ntfs4mac -L <label> /dev/diskXsY`. Run
-`diskutil listFilesystems` to see whether your macOS release lists
-`NTFS4Mac`; if it does, use `diskutil eraseVolume NTFS4Mac …`.
+fails.** Install the file-system bundle with `scripts/install-fs-bundle.sh`,
+then quit and reopen Disk Utility. Use the personality `NTFS4Mac` with
+`diskutil` (`NTFS` is Apple's read-only driver).
 
-**Disk Utility shows the volume as "Unknown".** Expected: the short name
-`ntfs4mac` matches no bundle in `/System/Library/Filesystems`. `mount` and
-`df` show `ntfs`.
+**The FSKit Modules switch does not react.** On macOS 26 the switch in the
+**By App** view of Login Items & Extensions fails for third-party modules
+(also reported for macFUSE and FUSE-T). Switch to **By Category** › File
+System Extensions › (i) and enable NTFS4Mac there.
 
 **Automount does nothing on macOS 15.4/15.5.** Disk Arbitration's FSKit
 probing bug (FB17772372) is fixed in 15.6. Use `mount -F` or upgrade.
@@ -728,12 +741,12 @@ AppleDouble files because the volume does not support extended attributes.
 - [x] Bridge self-test (13064 checks, 512/4096 block sizes, ASan/UBSan clean)
 - [x] FSKit extension source: probe, load, activate, read/write, namespace
       operations, check, format; manifest and entitlements
-- [ ] First compile of the Swift sources and validation on real hardware
-      (Apple Silicon and Intel), following `docs/TESTING.md`
+- [x] First compile and on-device validation (macOS 26.5, Intel): format,
+      mount, read/write, rename, symlinks, remount, `diskutil eraseDisk`
+- [ ] Validation on Apple Silicon and on Windows-formatted disks
 - [ ] Extended attributes and alternate data streams (xattr ↔ ADS)
 - [ ] Optional user-mapping support for POSIX ownership
-- [ ] Disk Utility / `diskutil` formatting, if Apple exposes FSKit
-      personalities there
+- [x] Disk Utility / `diskutil` formatting via `/Library/Filesystems/ntfs4mac.fs`
 - [ ] Signed, notarized release builds (Developer ID)
 
 ## Contributing
@@ -753,6 +766,17 @@ Contributions are welcome. Please:
    that hold data you care about.
 6. Include logs (`log stream ...`, see [Debugging](#debugging)) in bug
    reports.
+
+## Installer and releases
+
+Prebuilt installers are published on the GitHub
+[Releases](https://github.com/vahidzekic/ntfs4mac/releases) page
+(`NTFS4Mac-<version>.pkg`, universal). The installer puts
+`NTFS4Mac.app` in `/Applications` and `ntfs4mac.fs` in
+`/Library/Filesystems`; afterwards enable the extension under **By Category**
+(see [Troubleshooting](#troubleshooting--faq)). To build an installer yourself,
+see [docs/RELEASING.md](docs/RELEASING.md) and `scripts/make-release.sh`;
+`scripts/uninstall.sh` removes everything again.
 
 ## License
 

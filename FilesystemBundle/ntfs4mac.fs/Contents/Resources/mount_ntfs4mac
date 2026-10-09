@@ -1,0 +1,5 @@
+#!/bin/sh
+# mount_ntfs4mac — called by mount(8) / Disk Arbitration as
+# "mount_ntfs4mac [-o options] device mountpoint". -F makes mount(8) use the
+# FSKit module directly, so this never recurses into itself.
+exec /sbin/mount -F -t ntfs4mac "$@"

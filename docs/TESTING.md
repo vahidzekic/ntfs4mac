@@ -1,6 +1,6 @@
 # Compilation, Linking & Local Testing Guide
 
-This guide takes an Apple Silicon Mac from a clean checkout to a mounted,
+This guide takes a Mac (Apple Silicon or Intel) from a clean checkout to a mounted,
 writable NTFS test volume served by `NTFSExtension`. Each step has a command
 and the expected result. Where a statement rests on a forum post or another
 project rather than on Apple documentation, it is marked **(unverified)** and
@@ -23,7 +23,7 @@ Identifiers used throughout:
 
 | Requirement | Why / notes |
 |-------------|-------------|
-| Mac with Apple Silicon | Builds are `arm64` by default. Universal builds work too (`ARCHS="arm64 x86_64"`); the libraries are built universal. |
+| Mac (Apple Silicon or Intel) | The project builds universal (`arm64` + `x86_64`); Debug builds only the running Mac's architecture. The libraries are built universal. |
 | **macOS 15.4 or later**; **15.6+ or 26.x recommended** | FSKit is public from 15.4. On 15.4/15.5 Disk Arbitration fails to probe FSKit modules (FB17772372, fixed in 15.6 per Apple DTS), so automount only works from 15.6. `mount -F` works on 15.4. |
 | **Xcode 16.3+** (or Xcode 26.x) | The FSKit SDK and the *File System Extension* target template first shipped in Xcode 16.3. `xcode-select -p` must point at it: `sudo xcode-select -s /Applications/Xcode.app` |
 | Homebrew tools | `brew install xcodegen autoconf automake libtool pkg-config gettext` (`xcbeautify` optional). Only `pkg-config` and `xcodegen` are strictly needed with the Tuxera tarball; autotools are needed for the GitHub fallback. |
@@ -104,7 +104,8 @@ Or from the command line (this is what `scripts/dev-install.sh` does):
 
 ```sh
 xcodebuild -project NTFS4Mac.xcodeproj -scheme NTFS4Mac -configuration Debug \
-  -arch arm64 -derivedDataPath build/DerivedData -allowProvisioningUpdates \
+  -destination platform=macOS -derivedDataPath build/DerivedData -allowProvisioningUpdates \
+  -allowProvisioningDeviceRegistration \
   DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM build
 ```
 
@@ -392,6 +393,9 @@ faster than the install/enable/mount cycle.
 | `mount -F` on a **physical** disk: `EACCES` opening `/dev/rdiskN` | Known FSKit permission issue, acknowledged by DTS | Test with `hdiutil`-attached images or RAM disks; for real disks use Disk Arbitration (`diskutil mount`) |
 | Volume mounts read-only as plain `ntfs`, not `ntfs4mac` | Apple's kext driver won the probe | `diskutil unmount` then `mount -F -t ntfs4mac …` or remount (§6) |
 | `ECONNREFUSED` (61) from `ReallyMountVolume` after changing `FSShortName` | Stale per-volume state in `fskitd` | `sudo killall fskitd` |
+| `mount: Unable to invoke task` / `Invalid argument` (22) right after `umount` of the same device | FSKit tears the previous volume down asynchronously after `umount`; a mount sent before that finishes is rejected | Wait a few seconds (`sleep 3`) and mount again. Observed on macOS 26.5 with a RAM disk; the second mount succeeds after the pause |
+| "FSKit Modules" switch in **By App** view doesn't react | macOS 26 System Settings defect: the By App path is rejected by `fskitd` (EPERM); reported for macFUSE, FUSE-T and other FSKit modules **(third-party diagnosis)** | Use **By Category** → File System Extensions → (i) and enable the module there. The `enabledModules.plist` edit also works but is undocumented |
+| NTFS missing from Disk Utility Erase › Format / `diskutil listFilesystems` | Disk Utility lists formats from `*.fs` bundles with `FSFormatExecutable`, not from FSKit modules | `scripts/install-fs-bundle.sh` installs `/Library/Filesystems/ntfs4mac.fs` and restarts `storagekitd`; then reopen Disk Utility |
 | `mount` hangs | Extension paused in a debugger or deadlocked | Detach the debugger; check the bridge's per-volume mutex; `pkill -f NTFSExtension.appex` |
 | `EPERM` on read-write mount | Volume is hibernated / Fast Startup or unclean | Mount `-o rdonly`, or `-o remove_hiberfile` / `-o recover` (both write to the volume), or shut Windows down fully |
 | Disk Utility shows the volume as "Unknown" | `FSShortName` `ntfs4mac` doesn't map to a `/System/Library/Filesystems` bundle | Expected; see docs/FSKIT_MANIFEST.md "FSShortName and personality: decision" |

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  ntfs4mac.fs: classic file-system bundle, installed to /Library/Filesystems.
+
+  Disk Utility and `diskutil listFilesystems` / `eraseVolume` take the list of
+  formats from *.fs bundles in /System/Library/Filesystems and
+  /Library/Filesystems (a personality with an FSFormatExecutable), not from
+  FSKit modules. This bundle adds an "NTFS" personality whose helpers only
+  forward to the FSKit tools for our module:
+
+    newfs_ntfs4mac  -> /sbin/newfs_fskit -t ntfs4mac   (startFormat)
+    fsck_ntfs4mac   -> /sbin/fsck_fskit  -t ntfs4mac   (startCheck)
+    mount_ntfs4mac  -> /sbin/mount -F    -t ntfs4mac   (activate)
+
+  Modelled on Apple's exfat.fs. No FSMediaTypes here on purpose: probing and
+  automount stay with the FSKit module's own FSMediaTypes.
+-->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.vahidzekic.ntfs4mac.fs</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>ntfs4mac</string>
+	<key>CFBundlePackageType</key>
+	<string>fs  </string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>FSImplementation</key>
+	<array>
+		<string>UserFS</string>
+	</array>
+	<key>FSPersonalities</key>
+	<dict>
+		<key>NTFS4Mac</key>
+		<dict>
+			<key>FSName</key>
+			<string>NTFS</string>
+			<key>FSSubType</key>
+			<integer>0</integer>
+			<key>FSFormatExecutable</key>
+			<string>newfs_ntfs4mac</string>
+			<key>FSFormatArguments</key>
+			<string></string>
+			<!-- Partition type for the new volume: MBR 0x07 / GPT Microsoft Basic Data. -->
+			<key>FSFormatContentMask</key>
+			<string>Windows_NTFS</string>
+			<key>FSFormatMinimumSize</key>
+			<integer>1048576</integer>
+			<key>FSFormatMaximumSize</key>
+			<integer>281474976710656</integer>
+			<key>FSMountExecutable</key>
+			<string>mount_ntfs4mac</string>
+			<key>FSMountArguments</key>
+			<string></string>
+			<key>FSRepairExecutable</key>
+			<string>fsck_ntfs4mac</string>
+			<key>FSRepairArguments</key>
+			<string>-y</string>
+			<key>FSVerificationExecutable</key>
+			<string>fsck_ntfs4mac</string>
+			<key>FSVerificationArguments</key>
+			<string>-n</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

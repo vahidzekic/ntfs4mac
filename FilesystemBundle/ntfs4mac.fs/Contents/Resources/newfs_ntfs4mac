@@ -1,0 +1,44 @@
+#!/bin/sh
+# newfs_ntfs4mac — format helper for Disk Utility / `diskutil eraseVolume`.
+# Translates newfs_* style arguments and forwards to the ntfs4mac FSKit module
+# through /sbin/newfs_fskit. The module's format syntax is "L:v:c:p:QfC";
+# other flags Disk Utility may pass are dropped so the strict module parser
+# never rejects them.
+set -u
+
+# FSKit modules are enabled per user. Disk Utility / storagekitd run this
+# helper as root without SUDO_UID, so newfs_fskit/fsck_fskit would look up
+# root's (empty) module list. Point them at the console user instead.
+if [ "$(id -u)" = 0 ] && [ -z "${SUDO_UID:-}" ]; then
+    console_uid=$(stat -f %u /dev/console 2>/dev/null || echo 0)
+    if [ "$console_uid" != 0 ]; then
+        SUDO_UID=$console_uid
+        SUDO_GID=$(id -g "$console_uid" 2>/dev/null || echo 20)
+        export SUDO_UID SUDO_GID
+    fi
+fi
+args=""
+add() { args="$args $(printf "'%s'" "$(printf %s "$1" | sed "s/'/'\\\\''/g")")"; }
+
+while getopts ":L:v:c:p:QfCN:F:S:s:R" opt; do
+    case "$opt" in
+        L|v) add -L; add "$OPTARG" ;;
+        c)   add -c; add "$OPTARG" ;;
+        p)   add -p; add "$OPTARG" ;;
+        Q)   add -Q ;;
+        f)   add -f ;;
+        C)   add -C ;;
+        *)   ;;  # unknown newfs_* flag: ignored
+    esac
+done
+shift $((OPTIND - 1))
+[ $# -ge 1 ] || { echo "usage: newfs_ntfs4mac [-v label] [-c cluster] device" >&2; exit 64; }
+
+# Use the last operand as the device; FSKit works on /dev/diskN, not rdisk.
+for dev in "$@"; do :; done
+case "$dev" in
+    /dev/rdisk*) dev="/dev/${dev#/dev/r}" ;;
+    disk*)       dev="/dev/$dev" ;;
+esac
+
+eval "exec /sbin/newfs_fskit -t ntfs4mac $args \"\$dev\""

@@ -107,9 +107,60 @@ static bool is_metadata_ino(uint64_t ino)
 /* ------------------------------------------------------------------------ */
 
 /*
- * libntfs-3g's default handler discards everything. We forward warnings and
- * errors to stderr (the extension's unified log) and drop the chatty levels.
+ * libntfs-3g's default handler discards everything. On macOS an app
+ * extension's stderr goes nowhere, so messages are sent to the unified log
+ * (subsystem com.vahidzekic.ntfs4mac.NTFSExtension, category "libntfs");
+ * elsewhere (the Linux self-test) they go to stderr.
+ *
+ * Normal operation forwards warnings and errors only. While mkntfs runs,
+ * ntfsb_log_install_mkntfs() also forwards its informational output, so a
+ * failed format shows which step failed.
  */
+#if defined(__APPLE__)
+#include <dispatch/dispatch.h>
+#include <os/log.h>
+
+static os_log_t bridge_os_log(void)
+{
+    static os_log_t log;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        log = os_log_create("com.vahidzekic.ntfs4mac.NTFSExtension", "libntfs");
+    });
+    return log;
+}
+#endif
+
+static int bridge_log_emit(const char *function, const char *file, int line, u32 level,
+                           void *data, const char *format, va_list args)
+{
+#if defined(__APPLE__)
+    (void)file;
+    (void)line;
+    (void)data;
+    const int saved_errno = errno; /* for PERROR, before vsnprintf can touch it */
+    char msg[1024];
+    vsnprintf(msg, sizeof(msg), format, args);
+    /* Trim the trailing newline libntfs-3g messages carry. */
+    size_t n = strlen(msg);
+    while (n > 0 && (msg[n - 1] == '\n' || msg[n - 1] == '\r'))
+        msg[--n] = '\0';
+    if (n == 0)
+        return 0;
+    const bool is_error = level & (NTFS_LOG_LEVEL_ERROR | NTFS_LOG_LEVEL_PERROR |
+                                   NTFS_LOG_LEVEL_CRITICAL);
+    if (level & NTFS_LOG_LEVEL_PERROR)
+        os_log_with_type(bridge_os_log(), OS_LOG_TYPE_ERROR, "%{public}s: %{public}s: %{public}s",
+                         function, msg, strerror(saved_errno));
+    else
+        os_log_with_type(bridge_os_log(), is_error ? OS_LOG_TYPE_ERROR : OS_LOG_TYPE_DEFAULT,
+                         "%{public}s: %{public}s", function, msg);
+    return (int)n;
+#else
+    return ntfs_log_handler_stderr(function, file, line, level, data, format, args);
+#endif
+}
+
 static int bridge_log_handler(const char *function, const char *file, int line,
                               u32 level, void *data, const char *format, va_list args)
 {
@@ -117,12 +168,27 @@ static int bridge_log_handler(const char *function, const char *file, int line,
                        NTFS_LOG_LEVEL_PERROR | NTFS_LOG_LEVEL_CRITICAL;
     if (!(level & wanted))
         return 0;
-    return ntfs_log_handler_stderr(function, file, line, level, data, format, args);
+    return bridge_log_emit(function, file, line, level, data, format, args);
+}
+
+/* mkntfs: everything its own log levels let through (quiet/info/verbose). */
+static int bridge_mkntfs_log_handler(const char *function, const char *file, int line,
+                                     u32 level, void *data, const char *format, va_list args)
+{
+    if (level & (NTFS_LOG_LEVEL_DEBUG | NTFS_LOG_LEVEL_TRACE | NTFS_LOG_LEVEL_ENTER |
+                 NTFS_LOG_LEVEL_LEAVE))
+        return 0;
+    return bridge_log_emit(function, file, line, level, data, format, args);
 }
 
 void ntfsb_log_install(void)
 {
     ntfs_log_set_handler(bridge_log_handler);
+}
+
+void ntfsb_log_install_mkntfs(void)
+{
+    ntfs_log_set_handler(bridge_mkntfs_log_handler);
 }
 
 static pthread_once_t g_log_once = PTHREAD_ONCE_INIT;

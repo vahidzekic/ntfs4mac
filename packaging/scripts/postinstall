@@ -1,0 +1,27 @@
+#!/bin/sh
+# Finish the install: fix ownership of the file-system bundle, make
+# storagekitd (Disk Utility / diskutil) reload its file-system list, register
+# the app and its FSKit extension for the logged-in user, and open the app so
+# the user sees how to enable the extension.
+set -u
+FS=/Library/Filesystems/ntfs4mac.fs
+APP=/Applications/NTFS4Mac.app
+LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+
+if [ -d "$FS" ]; then
+    chown -R root:wheel "$FS"
+    chmod 755 "$FS"/Contents/Resources/*_ntfs4mac
+fi
+killall storagekitd 2>/dev/null || true
+
+# FSKit modules are registered and enabled per user.
+console_uid=$(stat -f %u /dev/console 2>/dev/null || echo 0)
+if [ "$console_uid" != 0 ] && [ -d "$APP" ]; then
+    console_user=$(id -un "$console_uid")
+    as_user() { launchctl asuser "$console_uid" sudo -u "$console_user" "$@"; }
+    as_user "$LSREGISTER" -f -R -trusted "$APP" || true
+    as_user pluginkit -a "$APP/Contents/Extensions/NTFSExtension.appex" || true
+    as_user killall fskit_agent 2>/dev/null || true
+    as_user open "$APP" || true
+fi
+exit 0

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>body{font:13px -apple-system,Helvetica,sans-serif;line-height:1.45}code{font:12px Menlo,monospace}</style>
+</head><body>
+<h2>One more step: enable the extension</h2>
+<ol>
+<li>Open <b>System Settings › General › Login Items &amp; Extensions</b>.</li>
+<li>In the Extensions section choose <b>By Category</b> (the switch in the
+“By App” view does not work on macOS 26).</li>
+<li>Click <b>ⓘ</b> next to <b>File System Extensions</b>, turn on
+<b>NTFS (ntfs4mac)</b> and click <b>Done</b>.</li>
+</ol>
+<p>The NTFS4Mac app shows whether the extension is enabled. Then reconnect
+your NTFS disk, or choose <b>NTFS</b> in Disk Utility › Erase to format one.</p>
+<p>If Apple's built-in read-only NTFS driver mounts a disk first, unmount it
+and mount it again from Disk Utility, or run
+<code>mount -F -t ntfs4mac /dev/diskXsY /some/folder</code>.</p>
+<p>To uninstall, run <code>scripts/uninstall.sh</code> from the source
+repository, or delete the two items listed on the first page.</p>
+</body></html>

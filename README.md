@@ -58,6 +58,7 @@ use it.
 - [Project layout](#project-layout)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
+- [Installer and releases](#installer-and-releases)
 - [License](#license)
 - [Credits](#credits)
 
@@ -765,6 +766,17 @@ Contributions are welcome. Please:
    that hold data you care about.
 6. Include logs (`log stream ...`, see [Debugging](#debugging)) in bug
    reports.
+
+## Installer and releases
+
+Prebuilt installers are published on the GitHub
+[Releases](https://github.com/vahidzekic/ntfs4mac/releases) page
+(`NTFS4Mac-<version>.pkg`, universal). The installer puts
+`NTFS4Mac.app` in `/Applications` and `ntfs4mac.fs` in
+`/Library/Filesystems`; afterwards enable the extension under **By Category**
+(see [Troubleshooting](#troubleshooting--faq)). To build an installer yourself,
+see [docs/RELEASING.md](docs/RELEASING.md) and `scripts/make-release.sh`;
+`scripts/uninstall.sh` removes everything again.
 
 ## License
 

@@ -6,6 +6,24 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-09
+
+Universal build (Intel and Apple Silicon), tested on an M4 MacBook Air with
+macOS 15.7.
+
+### Fixed
+- **Formatting from Disk Utility on macOS 15.** On macOS 15, formatting
+  from Disk Utility or `diskutil eraseDisk|eraseVolume NTFS4Mac …` failed
+  with "File system formatter failed" (-69832). Disk Utility runs the
+  format helper as root, and on macOS 15 `newfs_fskit` rejects requests
+  from root (EINVAL) before they reach the module. The `newfs_ntfs4mac`
+  and `fsck_ntfs4mac` helpers now run the FSKit tools as the logged-in
+  user on macOS 15. macOS 26 is unchanged.
+
+### Known issues
+- On macOS 15 the NTFS4Mac app can show "Not registered with FSKit" even
+  when the extension is enabled and working.
+
 ## [0.1.0] - 2026-10-09
 
 First public preview, by Vahid Zekic. Tested on an Intel Mac with
@@ -65,5 +83,6 @@ macOS 26.5.
 - No extended attributes or alternate data streams, and no POSIX ownership
   mapping.
 
-[Unreleased]: https://github.com/vahidzekic/ntfs4mac/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/vahidzekic/ntfs4mac/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/vahidzekic/ntfs4mac/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/vahidzekic/ntfs4mac/releases/tag/v0.1.0

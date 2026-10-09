@@ -19,6 +19,7 @@
 
 <p align="center">
   <a href="https://github.com/vahidzekic/ntfs4mac/releases"><b>Download</b></a> ·
+  <a href="https://vahidzekic.github.io/ntfs4mac/">Website</a> ·
   <a href="#screenshots">Screenshots</a> ·
   <a href="#quick-start">Build from source</a> ·
   <a href="docs/TESTING.md">Testing guide</a> ·

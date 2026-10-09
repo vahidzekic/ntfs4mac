@@ -1,5 +1,7 @@
 # NTFS4Mac
 
+**Author / developer: [Vahid Zekic](https://github.com/vahidzekic)**
+
 A native, user-space **read/write NTFS driver for macOS 15.4+**, built as an
 Apple **FSKit** file-system module around **libntfs-3g** (the engine behind
 ntfs-3g). It lets Finder, `mount` and Disk Arbitration (automount,
@@ -59,6 +61,7 @@ use it.
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [Installer and releases](#installer-and-releases)
+- [Author](#author)
 - [License](#license)
 - [Credits](#credits)
 
@@ -778,7 +781,17 @@ Prebuilt installers are published on the GitHub
 see [docs/RELEASING.md](docs/RELEASING.md) and `scripts/make-release.sh`;
 `scripts/uninstall.sh` removes everything again.
 
+## Author
+
+NTFS4Mac is designed and developed by **Vahid Zekic**
+([@vahidzekic](https://github.com/vahidzekic)).
+
+Bug reports and pull requests are welcome on
+[GitHub](https://github.com/vahidzekic/ntfs4mac/issues).
+
 ## License
+
+Copyright © 2026 Vahid Zekic.
 
 ntfs4mac is built on the **[tuxera/ntfs-3g](https://github.com/tuxera/ntfs-3g)**
 repository: it links **libntfs-3g** and compiles **mkntfs** (ntfsprogs) into

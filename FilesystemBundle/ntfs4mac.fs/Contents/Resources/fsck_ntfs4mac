@@ -1,0 +1,21 @@
+#!/bin/sh
+# fsck_ntfs4mac — verify/repair helper (Disk Utility First Aid, Disk
+# Arbitration). Forwards to /sbin/fsck_fskit for the ntfs4mac module, whose
+# check syntax is "nqyfl"; other fsck_* flags (e.g. -x XML output) are dropped.
+set -u
+flags=""
+while getopts ":nqyflxdD:" opt; do
+    case "$opt" in
+        n|q|y|f|l) flags="$flags -$opt" ;;
+        *) ;;
+    esac
+done
+shift $((OPTIND - 1))
+[ $# -ge 1 ] || { echo "usage: fsck_ntfs4mac [-n|-q|-y] device" >&2; exit 8; }
+for dev in "$@"; do :; done
+case "$dev" in
+    /dev/rdisk*) dev="/dev/${dev#/dev/r}" ;;
+    disk*)       dev="/dev/$dev" ;;
+esac
+# shellcheck disable=SC2086
+exec /sbin/fsck_fskit -t ntfs4mac $flags "$dev"
